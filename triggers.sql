@@ -1,11 +1,7 @@
-CREATE TRIGGER  QuantityUpdate
-AFTER INSERT
-   ON order_items FOR EACH ROW
-
+CREATE OR REPLACE TRIGGER QUANTITYUPDATE 
+AFTER INSERT ON ORDER_ITEMS 
+FOR EACH ROW
 BEGIN
-
-UPDATE product
-SET products.quantity = Products.quantity - New.quantity 
-WHERE products.Product_ID = New.Product_ID ;
-
+    UPDATE product SET product.quantity = product.quantity - :new.quantity
+    where product.product_id = :new.product_id;
 END;
