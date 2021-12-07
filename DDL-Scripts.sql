@@ -86,3 +86,11 @@ CREATE TABLE order_tracking (
     delivery_status VARCHAR2(50),
     FOREIGN KEY(delivery_partner_id) REFERENCES delivery_partner(delivery_partner_id)
 );
+
+ALTER TABLE order_tracking 
+ADD tracking_number VARCHAR2(50);
+
+CREATE SEQUENCE orders_seq START WITH 1;
+CREATE SEQUENCE order_item_seq START WITH 1;
+CREATE SEQUENCE transaction_seq START WITH 1;
+CREATE SEQUENCE order_tracking_seq START WITH 1;
