@@ -1,5 +1,11 @@
 CREATE OR REPLACE PACKAGE c_utils AS
     
+    -- validating customer id
+    FUNCTION validate_customer_id(c_customer_id customer.customer_id%TYPE) RETURN NUMBER;
+    
+    -- validating address id
+    FUNCTION validate_address_id(c_address_id address.address_id%TYPE) RETURN NUMBER;
+    
     -- create an Order 
     PROCEDURE create_order(
         c_customer_id customer.customer_id%TYPE,
