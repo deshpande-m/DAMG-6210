@@ -1,5 +1,23 @@
 CREATE OR REPLACE PACKAGE BODY c_utils AS
     
+    -- calculate shipping charges
+    FUNCTION calculate_shipping_charges(c_shipping_type orders.shipping_type%TYPE) 
+    RETURN NUMBER
+    IS c_shipping_charges NUMBER;
+    BEGIN 
+        
+        IF c_shipping_type = 'Standard' THEN
+            c_shipping_charges := 0;
+        ELSIF c_shipping_type = 'Express' THEN
+            c_shipping_charges := 10;
+        ELSE
+            c_shipping_charges := -1;
+        END IF;
+        
+        RETURN c_shipping_charges; 
+    
+    END calculate_shipping_charges;
+    
     -- validating customer id
     FUNCTION validate_customer_id(c_customer_id customer.customer_id%TYPE) 
     RETURN NUMBER
@@ -62,7 +80,8 @@ CREATE OR REPLACE PACKAGE BODY c_utils AS
         
         c_shipping_charges NUMBER;
     BEGIN
-
+        c_order_id := -1;
+        
         IF (TRIM(c_customer_id) = '' or c_customer_id is null) THEN
             RAISE ex_customer_id_empty;
         ELSIF (TRIM(c_address_id) = '' or c_address_id is null) THEN
@@ -70,6 +89,10 @@ CREATE OR REPLACE PACKAGE BODY c_utils AS
         ELSIF (TRIM(c_shipping_type) = '' or c_shipping_type is null) THEN
             RAISE ex_shipping_type_empty;
         END IF;
+        
+        c_shipping_charges := calculate_shipping_charges(c_shipping_type);
+        
+        SAVEPOINT revert_created_order;
         
         IF c_shipping_charges = -1 THEN
             RAISE ex_shipping_type_not_valid;
