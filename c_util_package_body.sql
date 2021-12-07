@@ -17,7 +17,7 @@ CREATE OR REPLACE PACKAGE BODY c_utils AS
         RETURN c_shipping_charges; 
     
     END calculate_shipping_charges;
-    
+
     -- validating customer id
     FUNCTION validate_customer_id(c_customer_id customer.customer_id%TYPE) 
     RETURN NUMBER
@@ -62,6 +62,57 @@ CREATE OR REPLACE PACKAGE BODY c_utils AS
     
     END validate_address_id;
 
+    -- validating order id
+    FUNCTION validate_order_id(c_order_id orders.order_id%TYPE) 
+    RETURN NUMBER
+    IS 
+        is_order_id_valid NUMBER;
+    BEGIN
+        BEGIN
+            SELECT order_id INTO is_order_id_valid FROM orders WHERE order_id = c_order_id;
+    
+        EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+                is_order_id_valid := 0;
+        END;
+        RETURN is_order_id_valid; 
+    
+    END validate_order_id;
+    
+    -- validating product id
+    FUNCTION validate_product_id(c_product_id order_items.product_id%TYPE) 
+    RETURN NUMBER
+    IS 
+        is_product_id_valid NUMBER;
+    BEGIN
+        BEGIN
+            SELECT product_id INTO is_product_id_valid FROM product WHERE product_id = c_product_id;
+    
+        EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+                is_product_id_valid := 0;
+        END;
+        RETURN is_product_id_valid; 
+    
+    END validate_product_id;
+    
+    -- validating product quantity
+    FUNCTION validate_product_qty(c_product_id order_items.product_id%TYPE) 
+    RETURN NUMBER
+    IS 
+        c_product_qty NUMBER;
+    BEGIN
+        BEGIN
+            SELECT quantity INTO c_product_qty FROM product WHERE product_id = c_product_id;
+    
+        EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+                c_product_qty := -1;
+        END;
+        RETURN c_product_qty; 
+    
+    END validate_product_qty;
+    
     -- create an order 
     PROCEDURE create_order(
         c_customer_id customer.customer_id%TYPE,
@@ -124,3 +175,77 @@ CREATE OR REPLACE PACKAGE BODY c_utils AS
             DBMS_OUTPUT.PUT_LINE('Shipping type can not be null or empty');
             
     END create_order;
+
+    -- create order items
+    PROCEDURE create_order_items(
+        c_order_id orders.order_id%TYPE,
+        c_quantity order_items.quantity%TYPE,
+        c_product_id order_items.product_id%TYPE
+    )
+    AS
+        ex_order_id_not_found EXCEPTION;
+        ex_product_id_not_found EXCEPTION;
+        ex_product_qty_zero EXCEPTION;
+        ex_order_id_empty EXCEPTION;
+        ex_quantity_empty EXCEPTION;
+        
+        ex_quantity_zero EXCEPTION;
+        ex_quantity_invalid EXCEPTION;
+        
+        ex_product_id_empty EXCEPTION;
+    BEGIN
+        
+        IF (TRIM(c_order_id) = '' or c_order_id is null) THEN
+            RAISE ex_order_id_empty;
+        ELSIF (TRIM(c_quantity) = '' or c_quantity is null) THEN
+            RAISE ex_quantity_empty;
+        ELSIF (TRIM(c_product_id) = '' or c_product_id is null) THEN
+            RAISE ex_product_id_empty;
+        END IF;
+        
+        IF (REGEXP_LIKE(c_quantity, '^[0-9]+$')) THEN
+            IF c_quantity <= 0 THEN
+                RAISE ex_quantity_zero;
+            END IF;
+        ELSE
+            RAISE ex_quantity_invalid;
+        END IF;
+        
+        IF validate_order_id(c_order_id) = 0 THEN
+            RAISE ex_order_id_not_found;
+        ELSIF validate_product_id(c_product_id) = 0 THEN
+            RAISE ex_product_id_not_found;
+        ELSIF validate_product_qty(c_product_id) = 0 THEN
+            RAISE ex_product_qty_zero;
+        END IF;
+        
+        INSERT INTO order_items (order_item_id, order_id, quantity, product_id)
+        VALUES (order_item_seq.NEXTVAL, c_order_id, c_quantity, c_product_id);
+        
+    EXCEPTION
+        WHEN ex_order_id_not_found THEN
+            DBMS_OUTPUT.PUT_LINE('Order with the provided Id not found');
+            ROLLBACK TO revert_created_order;
+        WHEN ex_product_id_not_found THEN
+            DBMS_OUTPUT.PUT_LINE('Product with the provided Id not found');
+            ROLLBACK TO revert_created_order;
+        WHEN ex_product_qty_zero THEN
+            DBMS_OUTPUT.PUT_LINE('Quantity of the selected product is 0');
+            ROLLBACK TO revert_created_order;
+        WHEN ex_quantity_zero THEN
+            DBMS_OUTPUT.PUT_LINE('Quantity of the selected product can not be 0 or less than 0');
+            ROLLBACK TO revert_created_order;
+        WHEN ex_quantity_invalid THEN
+            DBMS_OUTPUT.PUT_LINE('Quantity of the selected product is invalid');
+            ROLLBACK TO revert_created_order;
+        WHEN ex_order_id_empty THEN
+            DBMS_OUTPUT.PUT_LINE('Order id can not be null or empty');
+            ROLLBACK TO revert_created_order;
+        WHEN ex_quantity_empty THEN
+            DBMS_OUTPUT.PUT_LINE('Quantity can not be null or empty');
+            ROLLBACK TO revert_created_order;
+        WHEN ex_product_id_empty THEN
+            DBMS_OUTPUT.PUT_LINE('Product id can not be null or empty');
+            ROLLBACK TO revert_created_order;
+        
+    END create_order_items;
