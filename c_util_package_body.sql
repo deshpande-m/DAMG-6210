@@ -112,6 +112,35 @@ CREATE OR REPLACE PACKAGE BODY c_utils AS
         RETURN c_product_qty; 
     
     END validate_product_qty;
+
+    -- fetching price of a product
+    FUNCTION get_product_price(c_product_id order_items.product_id%TYPE)
+    RETURN NUMBER
+    IS 
+        c_product_price NUMBER;
+    BEGIN
+        SELECT price INTO c_product_price FROM product WHERE product_id = c_product_id;
+
+        RETURN c_product_price; 
+    
+    END get_product_price;
+    
+    -- fetching total order price based on order items and their quantity
+    FUNCTION get_total_order_price(c_order_id orders.order_id%TYPE) 
+    RETURN NUMBER
+    IS 
+        c_total_price NUMBER;
+        CURSOR order_items_rec IS 
+        SELECT product_id, quantity FROM order_items WHERE order_id = c_order_id;
+    BEGIN
+        c_total_price := 0;
+        FOR order_item in order_items_rec
+        LOOP
+            c_total_price := c_total_price + (get_product_price(order_item.product_id)*order_item.quantity);
+        END LOOP;
+        RETURN c_total_price; 
+    
+    END get_total_order_price;
     
     -- create an order 
     PROCEDURE create_order(
@@ -249,3 +278,43 @@ CREATE OR REPLACE PACKAGE BODY c_utils AS
             ROLLBACK TO revert_created_order;
         
     END create_order_items;
+
+    -- create transaction
+    PROCEDURE create_transaction(
+        c_order_id orders.order_id%TYPE
+    )
+    AS
+        c_total_price NUMBER;
+        c_shipping_charges NUMBER;
+        ex_order_id_not_found EXCEPTION;
+        ex_order_id_empty EXCEPTION;
+    BEGIN
+        
+        IF (TRIM(c_order_id) = '' or c_order_id is null) THEN
+            RAISE ex_order_id_empty;
+        END IF;
+        
+        IF validate_order_id(c_order_id) = 0 THEN
+            RAISE ex_order_id_not_found;
+        END IF;
+        
+        SELECT shipping_charges INTO c_shipping_charges FROM orders WHERE order_id = c_order_id;
+        
+        c_total_price := get_total_order_price(c_order_id);
+        
+        INSERT INTO transaction (transaction_id, order_id, transaction_date, total_amount)
+        VALUES (transaction_seq.NEXTVAL, c_order_id, SYSTIMESTAMP, c_total_price + c_shipping_charges);
+        
+        UPDATE orders SET order_amount = c_total_price WHERE order_id = c_order_id;
+        
+    EXCEPTION
+        WHEN ex_order_id_not_found THEN
+            DBMS_OUTPUT.PUT_LINE('Order with the provided Id not found');
+            ROLLBACK TO revert_created_order;
+        WHEN ex_order_id_empty THEN
+            DBMS_OUTPUT.PUT_LINE('Order id can not be null or empty');
+            ROLLBACK TO revert_created_order;
+        
+    END create_transaction;
+
+END c_utils; 

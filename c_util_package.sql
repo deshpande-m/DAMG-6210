@@ -17,7 +17,13 @@ CREATE OR REPLACE PACKAGE c_utils AS
     
     -- validating product quantity
     FUNCTION validate_product_qty(c_product_id order_items.product_id%TYPE) RETURN NUMBER;
+
+    -- fetching total order price based on order items and their quantity
+    FUNCTION get_total_order_price(c_order_id orders.order_id%TYPE) RETURN NUMBER;
     
+    -- fetching price of a product
+    FUNCTION get_product_price(c_product_id order_items.product_id%TYPE) RETURN NUMBER;
+
     -- create an Order 
     PROCEDURE create_order(
         c_customer_id customer.customer_id%TYPE,
@@ -31,6 +37,11 @@ CREATE OR REPLACE PACKAGE c_utils AS
         c_order_id orders.order_id%TYPE,
         c_quantity order_items.quantity%TYPE,
         c_product_id order_items.product_id%TYPE
+    );
+
+    -- create transaction
+    PROCEDURE create_transaction(
+        c_order_id orders.order_id%TYPE
     );
     
 END c_utils; 
