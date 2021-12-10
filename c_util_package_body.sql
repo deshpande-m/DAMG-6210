@@ -141,7 +141,7 @@ CREATE OR REPLACE PACKAGE BODY c_utils AS
         RETURN c_total_price; 
     
     END get_total_order_price;
-    
+
     -- create an order 
     PROCEDURE create_order(
         c_customer_id customer.customer_id%TYPE,
@@ -316,5 +316,41 @@ CREATE OR REPLACE PACKAGE BODY c_utils AS
             ROLLBACK TO revert_created_order;
         
     END create_transaction;
+
+    -- create order tracking
+    PROCEDURE create_order_tracking(
+        c_order_id orders.order_id%TYPE
+    )
+    AS
+        c_tracking_number order_tracking.tracking_number%TYPE;
+        c_delivery_partner_id NUMBER;
+        ex_order_id_not_found EXCEPTION;
+        ex_order_id_empty EXCEPTION;
+    BEGIN
+        
+        IF (TRIM(c_order_id) = '' or c_order_id is null) THEN
+            RAISE ex_order_id_empty;
+        END IF;
+        
+        IF validate_order_id(c_order_id) = 0 THEN
+            RAISE ex_order_id_not_found;
+        END IF;
+        
+        SELECT dbms_random.string('X',10) INTO c_tracking_number FROM dual;
+        
+        SELECT delivery_partner_id INTO c_delivery_partner_id FROM(SELECT delivery_partner_id FROM delivery_partner ORDER BY DBMS_RANDOM.RANDOM) WHERE rownum = 1;
+        
+        INSERT INTO order_tracking (order_tracking_id, order_id, delivery_partner_id, delivery_status, tracking_number)
+        VALUES (order_tracking_seq.NEXTVAL, c_order_id, c_delivery_partner_id, 'ORDER PLACED', c_tracking_number);
+        
+    EXCEPTION
+        WHEN ex_order_id_not_found THEN
+            DBMS_OUTPUT.PUT_LINE('Order with the provided Id not found');
+            ROLLBACK TO revert_created_order;
+        WHEN ex_order_id_empty THEN
+            DBMS_OUTPUT.PUT_LINE('Order id can not be null or empty');
+            ROLLBACK TO revert_created_order;
+        
+    END create_order_tracking;
 
 END c_utils; 

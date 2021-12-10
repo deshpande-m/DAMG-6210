@@ -43,5 +43,10 @@ CREATE OR REPLACE PACKAGE c_utils AS
     PROCEDURE create_transaction(
         c_order_id orders.order_id%TYPE
     );
+
+    -- create order tracking
+    PROCEDURE create_order_tracking(
+        c_order_id orders.order_id%TYPE
+    );
     
 END c_utils; 
