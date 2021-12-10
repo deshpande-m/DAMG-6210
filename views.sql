@@ -12,3 +12,10 @@ select c.category_name, p.product_name, sum(o.quantity) as "Total Quantity Sold"
 join product p on c.category_id = p.product_id
 join order_items o on o.product_id = p.product_id
 group by c.category_name,p.product_name;
+
+--View to get inventory status and manufacture report to view products low on stock
+CREATE OR REPLACE VIEW Inventory_status as
+SELECT p.product_id,p.product_name,p.quantity as "Inventory",c.category_name,m.manufacturer_name from product p
+inner join category c on p.category_id = c.category_id
+inner join manufacturer m on p.manufacturer_id = m.manufacturer_id
+order by p.quantity asc;
