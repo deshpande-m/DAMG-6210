@@ -353,4 +353,45 @@ CREATE OR REPLACE PACKAGE BODY c_utils AS
         
     END create_order_tracking;
 
+    -- update order tracking status
+    PROCEDURE update_order_tracking_status(
+        c_order_id orders.order_id%TYPE,
+        c_status order_tracking.delivery_status%TYPE
+    )
+    
+    AS
+        ex_order_id_not_found EXCEPTION;
+        ex_order_id_empty EXCEPTION;
+        ex_status_empty EXCEPTION;
+        ex_status_invalid EXCEPTION;
+    BEGIN
+        
+        IF (TRIM(c_order_id) = '' or c_order_id is null) THEN
+            RAISE ex_order_id_empty;
+        ELSIF (TRIM(c_status) = '' or c_status is null) THEN
+            RAISE ex_status_empty;
+        END IF;
+        
+        IF validate_order_id(c_order_id) = 0 THEN
+            RAISE ex_order_id_not_found;
+        END IF;
+        
+        IF c_status != 'SHIPPED' and c_status != 'OUT FOR DELIVERY' and c_status != 'IN TRANSIT' and c_status != 'DELIVERED' THEN
+            RAISE ex_status_invalid;
+        END IF;
+        
+        UPDATE order_tracking SET delivery_status = c_status WHERE order_id = c_order_id;
+        
+    EXCEPTION
+        WHEN ex_order_id_not_found THEN
+            DBMS_OUTPUT.PUT_LINE('Order with the provided Id not found');
+        WHEN ex_order_id_empty THEN
+            DBMS_OUTPUT.PUT_LINE('Order id can not be null or empty');
+        WHEN ex_status_empty THEN
+            DBMS_OUTPUT.PUT_LINE('Status can not be empty');
+        WHEN ex_status_invalid THEN
+            DBMS_OUTPUT.PUT_LINE('Provided status in invalid. Valid values are SHIPPED, IN TRANSIT, OUT FOR DELIVERY, DELIVERED');
+            
+    END update_order_tracking_status;
+
 END c_utils; 

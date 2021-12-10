@@ -48,5 +48,11 @@ CREATE OR REPLACE PACKAGE c_utils AS
     PROCEDURE create_order_tracking(
         c_order_id orders.order_id%TYPE
     );
+
+    -- update order tracking status
+    PROCEDURE update_order_tracking_status(
+        c_order_id orders.order_id%TYPE,
+        c_status order_tracking.delivery_status%TYPE
+    );
     
 END c_utils; 
