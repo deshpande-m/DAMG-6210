@@ -54,5 +54,12 @@ CREATE OR REPLACE PACKAGE c_utils AS
         c_order_id orders.order_id%TYPE,
         c_status order_tracking.delivery_status%TYPE
     );
+
+    -- update product details
+    PROCEDURE update_product(
+        c_product_id product.product_id%TYPE,
+        c_type VARCHAR2,
+        c_value VARCHAR2
+    );
     
 END c_utils; 

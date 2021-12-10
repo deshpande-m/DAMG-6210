@@ -394,4 +394,56 @@ CREATE OR REPLACE PACKAGE BODY c_utils AS
             
     END update_order_tracking_status;
 
+    -- update product details
+    PROCEDURE update_product(
+        c_product_id product.product_id%TYPE,
+        c_type VARCHAR2,
+        c_value VARCHAR2
+    )
+    AS
+        ex_product_id_empty EXCEPTION;
+        ex_type_empty EXCEPTION;
+        ex_value_empty EXCEPTION;
+        ex_product_id_not_found EXCEPTION;
+        ex_invalid_value EXCEPTION;
+    BEGIN
+        
+        IF (TRIM(c_product_id) = '' or c_product_id is null) THEN
+            RAISE ex_product_id_empty;
+        ELSIF (TRIM(c_type) = '' or c_type is null) THEN
+            RAISE ex_type_empty;
+        ELSIF (TRIM(c_value) = '' or c_value is null) THEN
+            RAISE ex_value_empty;
+        END IF;
+        
+        IF validate_product_id(c_product_id) = 0 THEN
+            RAISE ex_product_id_not_found;
+        END IF;
+        
+        IF c_type != 'Quantity' and c_type != 'Price' and c_type != 'Name' THEN
+            RAISE ex_invalid_value;
+        END IF;
+        
+        IF c_type = 'Quantity' THEN
+            UPDATE product SET quantity = TO_NUMBER(c_value) WHERE product_id = c_product_id;
+        ELSIF c_type = 'Price' THEN
+            UPDATE product SET price = TO_NUMBER(c_value) WHERE product_id = c_product_id;
+        ELSIF c_type = 'Name' THEN
+            UPDATE product SET product_name = c_value WHERE product_id = c_product_id;
+        END IF;
+        
+    EXCEPTION
+        WHEN ex_product_id_empty THEN
+            DBMS_OUTPUT.PUT_LINE('Product id can not be null or empty');
+        WHEN ex_type_empty THEN
+            DBMS_OUTPUT.PUT_LINE('Type can not be null or empty');
+        WHEN ex_value_empty THEN
+            DBMS_OUTPUT.PUT_LINE('Value can not be empty');
+        WHEN ex_product_id_not_found THEN
+            DBMS_OUTPUT.PUT_LINE('Product Id can not be found');
+        WHEN ex_invalid_value THEN
+            DBMS_OUTPUT.PUT_LINE('Provided value in invalid. Valid values are Quantity, Price, Name');
+            
+    END update_product;
+
 END c_utils; 
