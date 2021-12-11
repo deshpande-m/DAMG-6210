@@ -246,6 +246,8 @@ CREATE OR REPLACE PACKAGE BODY c_utils AS
             RAISE ex_product_id_not_found;
         ELSIF validate_product_qty(c_product_id) = 0 THEN
             RAISE ex_product_qty_zero;
+        ELSIF c_quantity > validate_product_qty(c_product_id) THEN
+            RAISE ex_ordered_qty_exceeds;
         END IF;
         
         INSERT INTO order_items (order_item_id, order_id, quantity, product_id)
@@ -275,6 +277,9 @@ CREATE OR REPLACE PACKAGE BODY c_utils AS
             ROLLBACK TO revert_created_order;
         WHEN ex_product_id_empty THEN
             DBMS_OUTPUT.PUT_LINE('Product id can not be null or empty');
+            ROLLBACK TO revert_created_order;
+         WHEN ex_ordered_qty_exceeds THEN
+            DBMS_OUTPUT.PUT_LINE('The quantity of the product ordered is greater than the current quantity of product');
             ROLLBACK TO revert_created_order;
         
     END create_order_items;
