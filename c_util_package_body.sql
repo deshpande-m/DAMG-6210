@@ -25,7 +25,7 @@ CREATE OR REPLACE PACKAGE BODY c_utils AS
         is_customer_id_valid NUMBER;
         fetch_customer_id NUMBER;
         CURSOR customer_rec IS 
-        SELECT customer_id FROM customer WHERE customer_id = c_customer_id;
+        SELECT customer_id FROM customer WHERE customer_id = c_customer_id and is_active = 1;
     BEGIN 
         OPEN customer_rec;
         FETCH customer_rec INTO fetch_customer_id;
@@ -86,7 +86,7 @@ CREATE OR REPLACE PACKAGE BODY c_utils AS
         is_product_id_valid NUMBER;
     BEGIN
         BEGIN
-            SELECT product_id INTO is_product_id_valid FROM product WHERE product_id = c_product_id;
+            SELECT product_id INTO is_product_id_valid FROM product WHERE product_id = c_product_id and is_active = 1;
     
         EXCEPTION
             WHEN NO_DATA_FOUND THEN
@@ -103,7 +103,7 @@ CREATE OR REPLACE PACKAGE BODY c_utils AS
         c_product_qty NUMBER;
     BEGIN
         BEGIN
-            SELECT quantity INTO c_product_qty FROM product WHERE product_id = c_product_id;
+            SELECT quantity INTO c_product_qty FROM product WHERE product_id = c_product_id and is_active = 1;
     
         EXCEPTION
             WHEN NO_DATA_FOUND THEN
@@ -119,7 +119,7 @@ CREATE OR REPLACE PACKAGE BODY c_utils AS
     IS 
         c_product_price NUMBER;
     BEGIN
-        SELECT price INTO c_product_price FROM product WHERE product_id = c_product_id;
+        SELECT price INTO c_product_price FROM product WHERE product_id = c_product_id and is_active = 1;
 
         RETURN c_product_price; 
     
