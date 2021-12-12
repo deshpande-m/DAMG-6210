@@ -1,4 +1,5 @@
 -- View to get top 3 products sold by quantity per year
+create or replace view Top_Products as
 select product_name, "Total Quantity Sold", "Year" from
 (select p.product_name, sum(o.quantity) as "Total Quantity Sold", EXTRACT(YEAR from (orders.order_date)) as "Year",
 rank() over (partition by EXTRACT(YEAR from (orders.order_date)) order by sum(o.quantity) desc) as rn
@@ -23,12 +24,31 @@ where rn in (1,2,3);
 
 select * from top_categories;
 
---View to get inventory status and manufacture report to view products low on stock
+--View to get inventory status and manufacture report to view products low on stock, quantity less than equal 20
 CREATE OR REPLACE VIEW Inventory_status as
 SELECT p.product_id,p.product_name,p.quantity as "Inventory",c.category_name,m.manufacturer_name from product p
 inner join category c on p.category_id = c.category_id
 inner join manufacturer m on p.manufacturer_id = m.manufacturer_id
+where p.quantity <=20
 order by p.quantity asc;
 
 Select * from inventory_status;
 
+
+-- Top customers by order amount
+Create or replace view Top_Customers as
+select c.customer_id,first_name, last_name,SUM(o.order_amount) as "Total Order Amount" from customer c
+join orders o on o.customer_id = c.customer_id
+group by c.customer_id,first_name,last_name
+order by sum(o.order_amount) desc;
+
+Select * from Top_Customers;
+
+-- Top view total delivery count by delivery vendors
+Create or replace view Delivery_Count as
+select d.delivery_partner_id, d.delivery_partner_name,count(o.delivery_partner_id) as "Total Count" from delivery_partner d
+join order_tracking o on o.delivery_partner_id = d.delivery_partner_id
+group by d.delivery_partner_id, d.delivery_partner_name
+order by count(o.delivery_partner_id) desc;
+
+Select * from Delivery_Count;
