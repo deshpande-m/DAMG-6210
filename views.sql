@@ -52,3 +52,19 @@ group by d.delivery_partner_id, d.delivery_partner_name
 order by count(o.delivery_partner_id) desc;
 
 Select * from Delivery_Count;
+
+-- Top manufacturer average ratings and total number of orders placed
+CREATE OR REPLACE VIEW manufacturer_ratings AS
+SELECT m.manufacturer_id, m.manufacturer_name, AVG(r.rating) as "AVG RATINGS", COUNT(oi.order_item_id) as "NO OF ORDERS PLACED",
+CASE
+    WHEN avg(r.rating) >= 1 AND avg(r.rating)  <=2.5 
+        THEN 'LOW'
+    WHEN avg(r.rating) >2.5 AND avg(r.rating) <= 4
+        THEN 'MEDIUM'
+    ELSE 
+        'HIGH'
+END CATEGORY
+FROM reviews r ,order_items oi, product p, manufacturer m 
+WHERE r.order_item_id = oi.order_item_id and oi.product_id = p.product_id 
+AND p.manufacturer_id = m.manufacturer_id 
+GROUP BY m.manufacturer_id, m.manufacturer_name, m.manufacturer_id ORDER BY AVG(r.rating) DESC;
