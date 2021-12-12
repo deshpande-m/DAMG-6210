@@ -25,7 +25,7 @@ CREATE OR REPLACE PACKAGE BODY c_utils AS
         is_customer_id_valid NUMBER;
         fetch_customer_id NUMBER;
         CURSOR customer_rec IS 
-        SELECT customer_id FROM customer WHERE customer_id = c_customer_id;
+        SELECT customer_id FROM customer WHERE customer_id = c_customer_id and is_active = 1;
     BEGIN 
         OPEN customer_rec;
         FETCH customer_rec INTO fetch_customer_id;
@@ -86,7 +86,7 @@ CREATE OR REPLACE PACKAGE BODY c_utils AS
         is_product_id_valid NUMBER;
     BEGIN
         BEGIN
-            SELECT product_id INTO is_product_id_valid FROM product WHERE product_id = c_product_id;
+            SELECT product_id INTO is_product_id_valid FROM product WHERE product_id = c_product_id and is_active = 1;
     
         EXCEPTION
             WHEN NO_DATA_FOUND THEN
@@ -103,7 +103,7 @@ CREATE OR REPLACE PACKAGE BODY c_utils AS
         c_product_qty NUMBER;
     BEGIN
         BEGIN
-            SELECT quantity INTO c_product_qty FROM product WHERE product_id = c_product_id;
+            SELECT quantity INTO c_product_qty FROM product WHERE product_id = c_product_id and is_active = 1;
     
         EXCEPTION
             WHEN NO_DATA_FOUND THEN
@@ -119,7 +119,7 @@ CREATE OR REPLACE PACKAGE BODY c_utils AS
     IS 
         c_product_price NUMBER;
     BEGIN
-        SELECT price INTO c_product_price FROM product WHERE product_id = c_product_id;
+        SELECT price INTO c_product_price FROM product WHERE product_id = c_product_id and is_active = 1;
 
         RETURN c_product_price; 
     
@@ -246,6 +246,8 @@ CREATE OR REPLACE PACKAGE BODY c_utils AS
             RAISE ex_product_id_not_found;
         ELSIF validate_product_qty(c_product_id) = 0 THEN
             RAISE ex_product_qty_zero;
+        ELSIF c_quantity > validate_product_qty(c_product_id) THEN
+            RAISE ex_ordered_qty_exceeds;
         END IF;
         
         INSERT INTO order_items (order_item_id, order_id, quantity, product_id)
@@ -275,6 +277,9 @@ CREATE OR REPLACE PACKAGE BODY c_utils AS
             ROLLBACK TO revert_created_order;
         WHEN ex_product_id_empty THEN
             DBMS_OUTPUT.PUT_LINE('Product id can not be null or empty');
+            ROLLBACK TO revert_created_order;
+         WHEN ex_ordered_qty_exceeds THEN
+            DBMS_OUTPUT.PUT_LINE('The quantity of the product ordered is greater than the current quantity of product');
             ROLLBACK TO revert_created_order;
         
     END create_order_items;
@@ -445,5 +450,55 @@ CREATE OR REPLACE PACKAGE BODY c_utils AS
             DBMS_OUTPUT.PUT_LINE('Provided value in invalid. Valid values are Quantity, Price, Name');
             
     END update_product;
+
+    -- inactivate customer
+    PROCEDURE inactivate_customer(
+        c_customer_id product.product_id%TYPE
+    )
+    AS
+        ex_customer_id_empty EXCEPTION;
+        ex_customer_id_not_found EXCEPTION;
+    BEGIN
+        
+        IF (TRIM(c_customer_id) = '' or c_customer_id is null) THEN
+            RAISE ex_customer_id_empty;
+        ELSIF validate_customer_id(c_customer_id) = 0 THEN
+            RAISE ex_customer_id_not_found;
+        END IF;
+        
+            UPDATE customer SET is_active = 0 WHERE customer_id = c_customer_id;
+        
+    EXCEPTION
+        WHEN ex_customer_id_empty THEN
+            DBMS_OUTPUT.PUT_LINE('Customer id can not be null or empty');
+        WHEN ex_customer_id_not_found THEN
+            DBMS_OUTPUT.PUT_LINE('Customer Id can not be found');
+            
+    END inactivate_customer;
+    
+    -- inactivate product
+    PROCEDURE inactivate_product(
+        c_product_id product.product_id%TYPE
+    )
+    AS
+        ex_product_id_empty EXCEPTION;
+        ex_product_id_not_found EXCEPTION;
+    BEGIN
+        
+        IF (TRIM(c_product_id) = '' or c_product_id is null) THEN
+            RAISE ex_product_id_empty;
+        ELSIF validate_product_id(c_product_id) = 0 THEN
+            RAISE ex_product_id_not_found;
+        END IF;
+        
+            UPDATE product SET is_active = 0 WHERE product_id = c_product_id;
+        
+    EXCEPTION
+        WHEN ex_product_id_empty THEN
+            DBMS_OUTPUT.PUT_LINE('Product id can not be null or empty');
+        WHEN ex_product_id_not_found THEN
+            DBMS_OUTPUT.PUT_LINE('Product Id can not be found');
+            
+    END inactivate_product;
 
 END c_utils; 
