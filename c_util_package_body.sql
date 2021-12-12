@@ -142,6 +142,21 @@ CREATE OR REPLACE PACKAGE BODY c_utils AS
     
     END get_total_order_price;
 
+    -- getting product recommendations
+    FUNCTION get_products_rec (pid in number)
+    RETURN product_rec
+    AS
+    return_value product_rec;
+    BEGIN
+    SELECT product_obj(product_id, product_name, category_name)
+    bulk collect INTO return_value      
+    FROM product p
+    INNER JOIN category c
+    ON p.category_id = c.category_id
+    WHERE c.category_id = (SELECT DISTINCT category_id FROM product WHERE product_id = pid);
+    RETURN return_value;
+    END get_products_rec;
+
     -- create an order 
     PROCEDURE create_order(
         c_customer_id customer.customer_id%TYPE,
