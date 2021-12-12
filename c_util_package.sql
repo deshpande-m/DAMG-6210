@@ -61,5 +61,15 @@ CREATE OR REPLACE PACKAGE c_utils AS
         c_type VARCHAR2,
         c_value VARCHAR2
     );
+
+    -- inactivate customer
+    PROCEDURE inactivate_customer(
+        c_customer_id product.product_id%TYPE
+    );
+    
+    -- inactivate product
+    PROCEDURE inactivate_product(
+        c_product_id product.product_id%TYPE
+    );
     
 END c_utils; 

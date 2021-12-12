@@ -451,4 +451,54 @@ CREATE OR REPLACE PACKAGE BODY c_utils AS
             
     END update_product;
 
+    -- inactivate customer
+    PROCEDURE inactivate_customer(
+        c_customer_id product.product_id%TYPE
+    )
+    AS
+        ex_customer_id_empty EXCEPTION;
+        ex_customer_id_not_found EXCEPTION;
+    BEGIN
+        
+        IF (TRIM(c_customer_id) = '' or c_customer_id is null) THEN
+            RAISE ex_customer_id_empty;
+        ELSIF validate_customer_id(c_customer_id) = 0 THEN
+            RAISE ex_customer_id_not_found;
+        END IF;
+        
+            UPDATE customer SET is_active = 0 WHERE customer_id = c_customer_id;
+        
+    EXCEPTION
+        WHEN ex_customer_id_empty THEN
+            DBMS_OUTPUT.PUT_LINE('Customer id can not be null or empty');
+        WHEN ex_customer_id_not_found THEN
+            DBMS_OUTPUT.PUT_LINE('Customer Id can not be found');
+            
+    END inactivate_customer;
+    
+    -- inactivate product
+    PROCEDURE inactivate_product(
+        c_product_id product.product_id%TYPE
+    )
+    AS
+        ex_product_id_empty EXCEPTION;
+        ex_product_id_not_found EXCEPTION;
+    BEGIN
+        
+        IF (TRIM(c_product_id) = '' or c_product_id is null) THEN
+            RAISE ex_product_id_empty;
+        ELSIF validate_product_id(c_product_id) = 0 THEN
+            RAISE ex_product_id_not_found;
+        END IF;
+        
+            UPDATE product SET is_active = 0 WHERE product_id = c_product_id;
+        
+    EXCEPTION
+        WHEN ex_product_id_empty THEN
+            DBMS_OUTPUT.PUT_LINE('Product id can not be null or empty');
+        WHEN ex_product_id_not_found THEN
+            DBMS_OUTPUT.PUT_LINE('Product Id can not be found');
+            
+    END inactivate_product;
+
 END c_utils; 
