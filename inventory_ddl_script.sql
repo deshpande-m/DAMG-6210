@@ -9,7 +9,8 @@ CREATE OR REPLACE PACKAGE create_delete_utils AS
     -- delete table records
     PROCEDURE delete_records;
     
-END create_delete_util;
+END create_delete_utils;
+/
 
 -- package body for creating tables and deleting records from the table
 CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
@@ -39,7 +40,10 @@ CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
                     date_of_birth DATE,
                     email VARCHAR2(50),
                     is_active NUMBER 
-                )';      
+                )';
+
+                EXECUTE IMMEDIATE
+                'CREATE SEQUENCE customer_seq START WITH 1';
                 
             ELSIF c_upper_table_name = 'ADDRESS' THEN
                 EXECUTE IMMEDIATE
@@ -54,6 +58,9 @@ CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
                     zip NUMBER,
                     country VARCHAR2(50)
                 )';
+
+                EXECUTE IMMEDIATE
+                'CREATE SEQUENCE address_seq START WITH 1';
                 
             ELSIF c_upper_table_name = 'CATEGORY' THEN
                 EXECUTE IMMEDIATE
@@ -62,6 +69,9 @@ CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
                     category_name VARCHAR2(50),
                     category_desc VARCHAR2(100)
                 )';
+
+                EXECUTE IMMEDIATE
+                'CREATE SEQUENCE category_seq START WITH 1';
                 
             ELSIF c_upper_table_name = 'MANUFACTURER' THEN
                 EXECUTE IMMEDIATE
@@ -70,6 +80,9 @@ CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
                     manufacturer_name VARCHAR2(50),
                     manufacturer_desc VARCHAR2(100)
                 )';
+
+                EXECUTE IMMEDIATE
+                'CREATE SEQUENCE manufacturer_seq START WITH 1';
                 
             ELSIF c_upper_table_name = 'PRODUCT' THEN
                 EXECUTE IMMEDIATE
@@ -84,6 +97,9 @@ CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
                     CONSTRAINT fkey_product_manufacturer_id FOREIGN KEY(manufacturer_id) REFERENCES manufacturer(manufacturer_id) ON DELETE CASCADE,
                     is_active NUMBER
                 )';
+
+                EXECUTE IMMEDIATE
+                'CREATE SEQUENCE product_seq START WITH 1';
                 
             ELSIF c_upper_table_name = 'DELIVERY_PARTNER' THEN
                 EXECUTE IMMEDIATE
@@ -91,6 +107,9 @@ CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
                     delivery_partner_id NUMBER PRIMARY KEY,
                     delivery_partner_name VARCHAR2(50)
                 )';
+
+                EXECUTE IMMEDIATE
+                'CREATE SEQUENCE delivery_partner_seq START WITH 1';
                 
             ELSIF c_upper_table_name = 'ORDERS' THEN
                 EXECUTE IMMEDIATE
@@ -107,6 +126,9 @@ CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
                     CONSTRAINT fkey_order_customer_id FOREIGN KEY(customer_id) REFERENCES customer(customer_id) ON DELETE CASCADE,
                     CONSTRAINT fkey_order_address_id FOREIGN KEY(address_id) REFERENCES address(address_id) ON DELETE CASCADE
                 )';
+
+                EXECUTE IMMEDIATE
+                'CREATE SEQUENCE orders_seq START WITH 1';
                 
             ELSIF c_upper_table_name = 'ORDER_ITEMS' THEN
                 EXECUTE IMMEDIATE
@@ -119,6 +141,9 @@ CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
                     CONSTRAINT fkey_order_items_product_id FOREIGN KEY(product_id) REFERENCES product(product_id)
                 )';
                 
+                EXECUTE IMMEDIATE
+                'CREATE SEQUENCE order_item_seq START WITH 1';
+
             ELSIF c_upper_table_name = 'TRANSACTION' THEN
                 EXECUTE IMMEDIATE
                 'CREATE TABLE transaction (
@@ -129,6 +154,9 @@ CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
                     payment_method VARCHAR2(50),
                     CONSTRAINT fkey_transaction_order_id FOREIGN KEY(order_id) REFERENCES orders(order_id) ON DELETE CASCADE
                 )';
+
+                EXECUTE IMMEDIATE
+                'CREATE SEQUENCE transaction_seq START WITH 1';
                 
             ELSIF c_upper_table_name = 'ORDER_TRACKING' THEN
                 EXECUTE IMMEDIATE
@@ -142,6 +170,9 @@ CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
                     CONSTRAINT fkey_order_tracking_delivery_partner_id FOREIGN KEY(delivery_partner_id) REFERENCES delivery_partner(delivery_partner_id) ON DELETE CASCADE,
                     CONSTRAINT fkey_order_tracking_order_id FOREIGN KEY(order_id) REFERENCES orders(order_id) ON DELETE CASCADE
                 )';
+
+                EXECUTE IMMEDIATE
+                'CREATE SEQUENCE order_tracking_seq START WITH 1';
                 
             ELSIF c_upper_table_name = 'REVIEWS' THEN
                 EXECUTE IMMEDIATE
@@ -153,6 +184,9 @@ CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
                     rating NUMBER,
                     CONSTRAINT fkey_reviews_order_item_id FOREIGN KEY(order_item_id) REFERENCES order_items(order_item_id) ON DELETE CASCADE
                 )';
+                
+                EXECUTE IMMEDIATE
+                'CREATE SEQUENCE reviews_seq START WITH 1';
                 
             ELSE 
                 RAISE ex_table_not_found;
@@ -309,4 +343,21 @@ CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
         
     END delete_records;
     
-END create_delete_utils; 
+END create_delete_utils;
+/
+
+-- script to create tables if doesnt exist
+BEGIN
+    create_delete_utils.create_table('CUSTOMER');
+    create_delete_utils.create_table('ADDRESS');
+    create_delete_utils.create_table('CATEGORY');
+    create_delete_utils.create_table('MANUFACTURER');
+    create_delete_utils.create_table('PRODUCT');
+    create_delete_utils.create_table('DELIVERY_PARTNER');
+    create_delete_utils.create_table('ORDERS');
+    create_delete_utils.create_table('ORDER_ITEMS');
+    create_delete_utils.create_table('TRANSACTION');
+    create_delete_utils.create_table('ORDER_TRACKING');
+    create_delete_utils.create_table('REVIEWS');
+END;
+/
