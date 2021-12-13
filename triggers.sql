@@ -30,3 +30,14 @@ END;
 
 UPDATE order_tracking SET order_tracking.delivery_status = 'DELIVERED'
 where order_tracking_id = 2;
+
+/*  Update shipping date to shipped date on orders when delivery status is set to shipped on tracking */
+CREATE OR REPLACE TRIGGER SHIPPINGDATEUPDATE
+AFTER UPDATE ON ORDER_TRACKING 
+FOR EACH ROW
+BEGIN
+    UPDATE orders SET orders.shipping_date = SYSDATE where orders.order_id = :new.order_id and :new.delivery_status = 'SHIPPED';
+END;
+
+UPDATE order_tracking SET order_tracking.delivery_status = 'SHIPPED'
+where order_tracking_id = 27;
