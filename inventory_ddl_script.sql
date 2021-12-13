@@ -5,6 +5,9 @@ CREATE OR REPLACE PACKAGE create_delete_utils AS
     PROCEDURE create_table(
         c_table_name VARCHAR2
     );
+
+    -- delete table records
+    PROCEDURE delete_records;
     
 END create_delete_util;
 
@@ -162,5 +165,148 @@ CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
             DBMS_OUTPUT.PUT_LINE('Table name is invalid');
             
     END create_table;
+
+    -- delete table records
+    PROCEDURE delete_records
+    AS
+        c_value VARCHAR2(20);
+    BEGIN
+        -- disabling constraints
+        EXECUTE IMMEDIATE
+        'ALTER TABLE address DISABLE CONSTRAINT fkey_address_customer_id';
+        
+        EXECUTE IMMEDIATE
+        'ALTER TABLE product DISABLE CONSTRAINT fkey_product_category_id';
+        
+        EXECUTE IMMEDIATE
+        'ALTER TABLE product DISABLE CONSTRAINT fkey_product_manufacturer_id';
+        
+        EXECUTE IMMEDIATE
+        'ALTER TABLE orders DISABLE CONSTRAINT fkey_order_customer_id';
+        
+        EXECUTE IMMEDIATE
+        'ALTER TABLE orders DISABLE CONSTRAINT fkey_order_address_id';
+        
+        EXECUTE IMMEDIATE
+        'ALTER TABLE order_items DISABLE CONSTRAINT fkey_order_items_order_id';
+        
+        EXECUTE IMMEDIATE
+        'ALTER TABLE order_items DISABLE CONSTRAINT fkey_order_items_product_id';
+        
+        EXECUTE IMMEDIATE
+        'ALTER TABLE order_tracking DISABLE CONSTRAINT fkey_order_tracking_delivery_partner_id';
+        
+        EXECUTE IMMEDIATE
+        'ALTER TABLE reviews DISABLE CONSTRAINT fkey_reviews_order_item_id';
+        
+        EXECUTE IMMEDIATE
+        'ALTER TABLE transaction DISABLE CONSTRAINT fkey_transaction_order_id';
+        
+        EXECUTE IMMEDIATE
+        'ALTER TABLE order_tracking DISABLE CONSTRAINT fkey_order_tracking_order_id';
+        
+        -- deleting records
+        EXECUTE IMMEDIATE
+        'DELETE FROM customer';
+        
+        EXECUTE IMMEDIATE
+        'DELETE FROM address';
+        
+        EXECUTE IMMEDIATE
+        'DELETE FROM category';
+        
+        EXECUTE IMMEDIATE
+        'DELETE FROM manufacturer';
+        
+        EXECUTE IMMEDIATE
+        'DELETE FROM product';
+        
+        EXECUTE IMMEDIATE
+        'DELETE FROM delivery_partner';
+        
+        EXECUTE IMMEDIATE
+        'DELETE FROM orders';
+        
+        EXECUTE IMMEDIATE
+        'DELETE FROM order_items';
+        
+        EXECUTE IMMEDIATE
+        'DELETE FROM transaction';
+        
+        EXECUTE IMMEDIATE
+        'DELETE FROM order_tracking';
+        
+        EXECUTE IMMEDIATE
+        'DELETE FROM reviews';
+        
+        -- enabling constraints
+        EXECUTE IMMEDIATE
+        'ALTER TABLE address ENABLE CONSTRAINT fkey_address_customer_id';
+        
+        EXECUTE IMMEDIATE
+        'ALTER TABLE product ENABLE CONSTRAINT fkey_product_category_id';
+        
+        EXECUTE IMMEDIATE
+        'ALTER TABLE product ENABLE CONSTRAINT fkey_product_manufacturer_id';
+        
+        EXECUTE IMMEDIATE
+        'ALTER TABLE orders ENABLE CONSTRAINT fkey_order_customer_id';
+        
+        EXECUTE IMMEDIATE
+        'ALTER TABLE orders ENABLE CONSTRAINT fkey_order_address_id';
+        
+        EXECUTE IMMEDIATE
+        'ALTER TABLE order_items ENABLE CONSTRAINT fkey_order_items_order_id';
+        
+        EXECUTE IMMEDIATE
+        'ALTER TABLE order_items ENABLE CONSTRAINT fkey_order_items_product_id';
+        
+        EXECUTE IMMEDIATE
+        'ALTER TABLE order_tracking ENABLE CONSTRAINT fkey_order_tracking_delivery_partner_id';
+        
+        EXECUTE IMMEDIATE
+        'ALTER TABLE reviews ENABLE CONSTRAINT fkey_reviews_order_item_id';
+        
+        EXECUTE IMMEDIATE
+        'ALTER TABLE transaction ENABLE CONSTRAINT fkey_transaction_order_id';
+        
+        EXECUTE IMMEDIATE
+        'ALTER TABLE order_tracking ENABLE CONSTRAINT fkey_order_tracking_order_id';
+        
+        -- resetting sequence
+        EXECUTE IMMEDIATE
+        'ALTER SEQUENCE customer_seq RESTART';
+        
+        EXECUTE IMMEDIATE
+        'ALTER SEQUENCE address_seq RESTART';
+        
+        EXECUTE IMMEDIATE
+        'ALTER SEQUENCE category_seq RESTART';
+        
+        EXECUTE IMMEDIATE
+        'ALTER SEQUENCE manufacturer_seq RESTART';
+        
+        EXECUTE IMMEDIATE
+        'ALTER SEQUENCE product_seq RESTART';
+        
+        EXECUTE IMMEDIATE
+        'ALTER SEQUENCE delivery_partner_seq RESTART';
+        
+        EXECUTE IMMEDIATE
+        'ALTER SEQUENCE orders_seq RESTART';
+        
+        EXECUTE IMMEDIATE
+        'ALTER SEQUENCE order_item_seq RESTART';
+        
+        EXECUTE IMMEDIATE
+        'ALTER SEQUENCE transaction_seq RESTART';
+        
+        EXECUTE IMMEDIATE
+        'ALTER SEQUENCE order_tracking_seq RESTART';
+        
+        EXECUTE IMMEDIATE
+        'ALTER SEQUENCE reviews_seq RESTART';
+        
+    END delete_records;
     
 END create_delete_utils; 
