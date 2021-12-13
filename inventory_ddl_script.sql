@@ -921,7 +921,7 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
             RAISE ex_order_id_not_found;
         END IF;
         
-        IF c_status != 'SHIPPED' and c_status != 'OUT FOR DELIVERY' and c_status != 'IN TRANSIT' and c_status != 'DELIVERED' THEN
+        IF c_status != 'SHIPPED' and c_status != 'OUT FOR DELIVERY' and c_status != 'IN TRANSIT' and c_status != 'DELIVERED' and c_status != 'CANCELLED' THEN
             RAISE ex_status_invalid;
         END IF;
         
@@ -939,7 +939,7 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         WHEN ex_status_empty THEN
             DBMS_OUTPUT.PUT_LINE('Status can not be empty');
         WHEN ex_status_invalid THEN
-            DBMS_OUTPUT.PUT_LINE('Provided status in invalid. Valid values are SHIPPED, IN TRANSIT, OUT FOR DELIVERY, DELIVERED');
+            DBMS_OUTPUT.PUT_LINE('Provided status in invalid. Valid values are SHIPPED, IN TRANSIT, OUT FOR DELIVERY, DELIVERED, CANCELLED');
             
     END update_order_tracking_status;
 
@@ -1358,20 +1358,34 @@ BEGIN
 END;
 /
 
-/* Trigger to Increase inventory on canceling an order */
-CREATE OR REPLACE TRIGGER INCREASEQUANTITYUPDATE  BEFORE DELETE ON ORDER_ITEMS
-FOR EACH ROW
-BEGIN
-    UPDATE product SET product.quantity = product.quantity + :old.quantity
-    where product.product_id = :old.product_id;
-END;
-/
-
 /* Trigger to Update delivery date to delivered date on orders when delivery status is set to delivered on tracking */
 CREATE OR REPLACE TRIGGER DELIVERYDATEUPDATE
 AFTER UPDATE ON ORDER_TRACKING 
 FOR EACH ROW
 BEGIN
     UPDATE orders SET orders.delivery_datetime = SYSDATE where orders.order_id = :new.order_id and :new.delivery_status = 'DELIVERED';
+END;
+/
+
+/* Trigger to Increase inventory on canceling an order */
+CREATE OR REPLACE TRIGGER INCREASE_PRODUCT_QUANTITY
+AFTER UPDATE ON ORDER_TRACKING 
+FOR EACH ROW
+DECLARE
+    CURSOR order_item_list IS
+        SELECT product_id, quantity from order_items WHERE order_items.order_id = :new.order_id and :new.delivery_status = 'CANCELLED';
+
+    curr_order_item order_item_list%ROWTYPE;
+    c_quantity NUMBER;
+BEGIN
+    OPEN order_item_list;
+    LOOP
+        FETCH order_item_list INTO curr_order_item;
+        EXIT WHEN order_item_list%NOTFOUND;
+        SELECT quantity INTO c_quantity FROM product WHERE product_id = curr_order_item.product_id;
+        UPDATE product SET product.quantity = curr_order_item.quantity + c_quantity
+        WHERE product.product_id = curr_order_item.product_id;
+    END LOOP;
+    CLOSE order_item_list;
 END;
 /
