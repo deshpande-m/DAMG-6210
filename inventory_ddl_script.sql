@@ -1449,3 +1449,63 @@ BEGIN
     CLOSE order_item_list;
 END;
 /
+
+-- View to get top 3 products sold by quantity per year
+CREATE or REPLACE VIEW Top_Products AS
+SELECT product_name, "Total Quantity Sold", "Year" FROM
+(SELECT p.product_name, SUM(o.quantity) AS "Total Quantity Sold", EXTRACT(YEAR FROM (orders.order_date)) AS "Year",
+RANK() OVER (PARTITION BY EXTRACT(YEAR FROM (orders.order_date)) ORDER BY SUM(o.quantity) DESC) AS rn
+FROM product p
+JOIN order_items o ON p.product_id = o.product_id
+JOIN orders ON orders.order_id = o.order_id
+GROUP BY p.product_name,orders.order_date,o.quantity) a
+WHERE a. rn <= 3;
+
+-- View to get top 3 categories of product sold by quantity
+CREATE or REPLACE VIEW Top_Categories AS
+SELECT a.category_name, a.product_name, a.prodcount FROM
+(SELECT c.category_name, p.product_name, sum(o.quantity) AS prodcount,
+RANK() OVER (PARTITION BY c.category_name ORDER BY SUM(o.quantity) DESC) AS rn FROM Category c 
+LEFT JOIN product p
+on c.category_id = p.category_id
+JOIN order_items o on o.product_id = p.product_id
+GROUP BY c.category_name, p.product_name) a
+WHERE rn in (1,2,3);
+
+--View to get inventory status and manufacture report to view products low on stock, quantity less than equal 20
+CREATE OR REPLACE VIEW Inventory_status AS
+SELECT p.product_id,p.product_name,p.quantity AS "Inventory",c.category_name,m.manufacturer_name FROM product p
+INNER JOIN category c on p.category_id = c.category_id
+INNER JOIN manufacturer m on p.manufacturer_id = m.manufacturer_id
+WHERE p.quantity <=20
+ORDER BY p.quantity asc;
+
+-- Top customers by order amount
+CREATE or REPLACE VIEW Top_Customers AS
+SELECT c.customer_id,first_name, last_name,SUM(o.order_amount) AS "Total Order Amount" FROM customer c
+JOIN orders o on o.customer_id = c.customer_id
+GROUP BY c.customer_id,first_name,last_name
+ORDER BY SUM(o.order_amount) DESC;
+
+-- Top view total delivery count by delivery vendors
+CREATE or REPLACE VIEW Delivery_Count AS
+SELECT d.delivery_partner_id, d.delivery_partner_name,count(o.delivery_partner_id) AS "Total Count" FROM delivery_partner d
+JOIN order_tracking o on o.delivery_partner_id = d.delivery_partner_id
+GROUP BY d.delivery_partner_id, d.delivery_partner_name
+ORDER BY COUNT(o.delivery_partner_id) DESC;
+
+-- Top manufacturer average ratings and total number of orders placed
+CREATE OR REPLACE VIEW manufacturer_ratings AS
+SELECT m.manufacturer_id, m.manufacturer_name, AVG(r.rating) AS "AVG RATINGS", COUNT(oi.order_item_id) AS "NO OF ORDERS PLACED",
+CASE
+    WHEN AVG(r.rating) >= 1 AND AVG(r.rating)  <=2.5 
+        THEN 'LOW'
+    WHEN AVG(r.rating) >2.5 AND AVG(r.rating) <= 4
+        THEN 'MEDIUM'
+    ELSE 
+        'HIGH'
+END CATEGORY
+FROM reviews r ,order_items oi, product p, manufacturer m 
+WHERE r.order_item_id = oi.order_item_id and oi.product_id = p.product_id 
+AND p.manufacturer_id = m.manufacturer_id 
+GROUP BY m.manufacturer_id, m.manufacturer_name, m.manufacturer_id ORDER BY AVG(r.rating) DESC;
