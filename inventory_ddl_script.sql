@@ -439,6 +439,59 @@ CREATE OR REPLACE PACKAGE inventory_utils AS
     PROCEDURE inactivate_product(
         c_product_id product.product_id%TYPE
     );
+
+    -- insert customer
+    PROCEDURE insert_customer( 
+        p_first_name  customer.first_name%TYPE,
+        p_last_name  customer.last_name%TYPE,
+        p_date_of_birth  customer.date_of_birth%TYPE,
+        p_email  customer.email%TYPE,
+        p_is_active  customer.is_active%TYPE,
+        c_customer_id OUT customer.customer_id%TYPE
+    );
+    
+    -- insert address
+    PROCEDURE insert_address( 
+        p_address_id OUT address.address_id%TYPE,
+        p_customer_id  address.customer_id%TYPE,
+        p_address_1 address.address_1%TYPE,
+        p_address_2 address.address_2%TYPE,
+        p_city address.city%TYPE,
+        p_state address.state%TYPE,
+        p_zip address.zip%TYPE,
+        p_country address.country%TYPE   
+    );
+    
+    -- insert category
+    PROCEDURE insert_category( 
+        p_category_id OUT Category.category_id%TYPE,
+        p_category_name  Category.category_name%TYPE,
+        p_category_desc Category.category_desc%TYPE   
+    );
+    
+    --insert manufacturer
+    PROCEDURE insert_manufacturer( 
+        p_MANUFACTURER_id OUT MANUFACTURER.MANUFACTURER_id%TYPE,
+        p_MANUFACTURER_name  MANUFACTURER.MANUFACTURER_name%TYPE,
+        p_MANUFACTURER_desc MANUFACTURER.MANUFACTURER_desc%TYPE
+    );
+    
+    --insert product
+    PROCEDURE insert_product( 
+        p_product_id OUT product.product_id%TYPE,
+        p_name product.product_name%TYPE,
+        p_quantity product.quantity%TYPE,
+        p_price product.price%TYPE,
+        p_category_id product.category_id%TYPE,
+        p_manufacturer_id product.manufacturer_id%TYPE,
+        p_is_active product.is_active%TYPE  
+    );
+    
+    --insert delivery partner
+    PROCEDURE insert_delivery_partner( 
+        P_delivery_partner_id OUT DELIVERY_PARTNER.DELIVERY_PARTNER_ID%TYPE,
+        P_delivery_partner_name DELIVERY_PARTNER.DELIVERY_PARTNER_NAME%TYPE 
+    );
     
 END inventory_utils;
 /
@@ -966,5 +1019,246 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
             DBMS_OUTPUT.PUT_LINE('Product Id can not be found');
             
     END inactivate_product;
+
+    -- insert customer
+    PROCEDURE insert_customer( 
+        p_first_name  customer.first_name%TYPE,
+        p_last_name  customer.last_name%TYPE,
+        p_date_of_birth  customer.date_of_birth%TYPE,
+        p_email  customer.email%TYPE,
+        p_is_active  customer.is_active%TYPE,
+        c_customer_id OUT customer.customer_id%TYPE
+    )
+    AS
+        ex_first_name_not_found EXCEPTION;
+        ex_last_name_not_found EXCEPTION;
+        ex_email_empty EXCEPTION;
+        ex_active_status_invalid EXCEPTION;
+    BEGIN
+        c_customer_id := 0;
+        IF (TRIM(p_first_name) = '' or p_first_name is null) THEN
+            RAISE ex_first_name_not_found;
+        ELSIF (TRIM(p_last_name) = '' or p_last_name is null) THEN
+            RAISE ex_last_name_not_found;
+        ELSIF (TRIM(p_email) = '' or p_email is null) THEN
+            RAISE ex_email_empty;
+        END IF;
+        IF (p_is_active !=1 and p_is_active !=0) THEN
+            RAISE ex_active_status_invalid ;
+        END IF;
+        
+        c_customer_id := customer_seq.NEXTVAL;
+        INSERT INTO CUSTOMER (customer_id, first_name,last_name,date_of_birth,email,is_active)
+        VALUES (c_customer_id,p_first_name,p_last_name ,p_date_of_birth,p_email,p_is_active);   
+    
+    EXCEPTION
+        WHEN ex_first_name_not_found THEN
+            DBMS_OUTPUT.PUT_LINE('Customer first name not found');
+        WHEN ex_last_name_not_found THEN
+            DBMS_OUTPUT.PUT_LINE('Customer last name not found');
+        WHEN ex_email_empty THEN
+            DBMS_OUTPUT.PUT_LINE('Customer email id not found');
+        WHEN ex_active_status_invalid THEN
+            DBMS_OUTPUT.PUT_LINE('Customer status entered is invalid');
+
+    END insert_customer;
+    
+    -- insert address
+    PROCEDURE insert_address( 
+        p_address_id OUT address.address_id%TYPE,
+        p_customer_id  address.customer_id%TYPE,
+        p_address_1 address.address_1%TYPE,
+        p_address_2 address.address_2%TYPE,
+        p_city address.city%TYPE,
+        p_state address.state%TYPE,
+        p_zip address.zip%TYPE,
+        p_country address.country%TYPE   
+    )
+    AS
+        ex_customer_id_not_found EXCEPTION;
+        ex_address_1_not_found EXCEPTION;
+        ex_address_2_not_found EXCEPTION;
+        ex_city_not_found EXCEPTION;
+        ex_state_not_found EXCEPTION;
+        ex_country_not_found EXCEPTION;
+        ex_zipcode_empty EXCEPTION;
+        
+    BEGIN
+        p_address_id := 0;
+        
+        IF (TRIM(p_customer_id) = '' or p_customer_id is null) THEN
+            RAISE ex_customer_id_not_found;
+        ELSIF (TRIM(p_address_1) = '' or p_address_1 is null) THEN
+            RAISE ex_address_1_not_found;
+        ELSIF (TRIM(p_address_2) = '' or p_address_2 is null) THEN
+            RAISE ex_address_2_not_found;
+        ELSIF (TRIM(p_city) = '' or p_city is null) THEN
+            RAISE ex_city_not_found;
+        ELSIF (TRIM(p_state) = '' or p_state is null) THEN
+            RAISE ex_state_not_found;
+        ELSIF (TRIM(p_country) = '' or p_country is null) THEN
+            RAISE ex_country_not_found;    
+        END IF;
+        IF (REGEXP_LIKE(p_zip, '^[0-9]+$')=False) THEN
+            RAISE ex_zipcode_empty ;
+        END if; 
+        
+        p_address_id := address_seq.NEXTVAL;
+        INSERT INTO address (address_id,customer_id,address_1, address_2,city,state,zip,country)
+        VALUES (p_address_id,p_customer_id,p_address_1, p_address_2,p_city,p_state,p_zip,p_country);        
+    
+    
+    EXCEPTION
+            
+        WHEN ex_customer_id_not_found THEN
+            DBMS_OUTPUT.PUT_LINE('Customer Id not found');
+            
+        WHEN ex_address_1_not_found THEN
+            DBMS_OUTPUT.PUT_LINE('Customer address 1 not found');
+            
+        WHEN ex_address_2_not_found THEN
+            DBMS_OUTPUT.PUT_LINE('Customer address 2 not found');
+            
+        WHEN  ex_city_not_found THEN
+            DBMS_OUTPUT.PUT_LINE('Customer CITY id not found');
+            
+        WHEN ex_state_not_found THEN
+            DBMS_OUTPUT.PUT_LINE('Customer STATE NOT FOUND');
+            
+        WHEN ex_country_not_found THEN
+            DBMS_OUTPUT.PUT_LINE('Customer COUNTRY NOT FOUND');
+            
+        WHEN ex_zipcode_empty THEN
+            DBMS_OUTPUT.PUT_LINE('Customer ZIPCODE entered is invalid');
+    END insert_address;
+    
+    -- insert category
+    PROCEDURE  insert_category( 
+        p_category_id OUT Category.category_id%TYPE,
+        p_category_name  Category.category_name%TYPE,
+        p_category_desc Category.category_desc%TYPE   
+    )
+    AS
+        ex_category_name_not_found EXCEPTION;
+        
+    BEGIN
+        p_category_id := 0;
+        
+        IF(TRIM(p_category_name) = '' or p_category_name is null)THEN
+            RAISE ex_category_name_not_found;
+        END IF;    
+        
+        p_category_id := category_seq.NEXTVAL;
+        INSERT INTO Category(category_id,category_name,category_desc)
+        VALUES (p_category_id,p_category_name,p_category_desc);  
+    
+    EXCEPTION
+        WHEN ex_category_name_not_found THEN
+            DBMS_OUTPUT.PUT_LINE('CATEGORY NAME entered NOT FOUND');
+    END insert_category;
+    
+    --insert manufacturer
+    PROCEDURE  insert_manufacturer( 
+        p_MANUFACTURER_id OUT MANUFACTURER.MANUFACTURER_id%TYPE,
+        p_MANUFACTURER_name MANUFACTURER.MANUFACTURER_name%TYPE,
+        p_MANUFACTURER_desc MANUFACTURER.MANUFACTURER_desc%TYPE
+    )
+    AS
+        ex_MANUFACTURER_name_not_found EXCEPTION;
+        ex_DESCRIPTION_not_valid EXCEPTION;
+
+    BEGIN
+        p_MANUFACTURER_id := 0;
+        
+        IF (TRIM(p_MANUFACTURER_name) = '' or p_MANUFACTURER_name is null) THEN
+            RAISE ex_MANUFACTURER_name_not_found;
+        ELSIF (TRIM(p_MANUFACTURER_desc) = '' or p_MANUFACTURER_desc is null) THEN
+            RAISE ex_DESCRIPTION_not_valid;
+        END IF;
+        
+        p_MANUFACTURER_id := manufacturer_seq.NEXTVAL;
+        INSERT INTO MANUFACTURER (MANUFACTURER_id,MANUFACTURER_name,MANUFACTURER_desc)
+        VALUES (p_MANUFACTURER_id,p_MANUFACTURER_name,p_MANUFACTURER_desc);
+
+    EXCEPTION
+        WHEN ex_MANUFACTURER_name_not_found THEN
+            DBMS_OUTPUT.PUT_LINE('Manufacturer name cannot be null or empty');
+        WHEN  ex_DESCRIPTION_not_valid THEN
+            DBMS_OUTPUT.PUT_LINE('Manufacturer description cannot be null or empty');
+    END insert_manufacturer;
+    
+    --insert product
+    PROCEDURE insert_product( 
+        p_product_id OUT product.product_id%TYPE,
+        p_name product.product_name%TYPE,
+        p_quantity product.quantity%TYPE,
+        p_price product.price%TYPE,
+        p_category_id product.category_id%TYPE,
+        p_manufacturer_id product.manufacturer_id%TYPE,
+        p_is_active product.is_active%TYPE  
+    )
+    AS
+        ex_product_name_not_found EXCEPTION;
+        ex_product_PRICE_not_found EXCEPTION;
+        ex_product_categoryid_not_found EXCEPTION;
+        ex_product_manufacturerid_not_found EXCEPTION;
+        ex_product_status_invalid EXCEPTION;
+    BEGIN
+        p_product_id := 0;
+            
+        IF (TRIM(p_name) = '' or p_name is null) THEN
+            RAISE  ex_product_name_not_found;   
+        
+        ELSIF (p_price=0) THEN
+            RAISE ex_product_PRICE_not_found;
+             
+        ELSIF (p_category_id=0) THEN
+            RAISE ex_product_categoryid_not_found;
+            
+        ELSIF (p_manufacturer_id= 0) THEN
+            RAISE ex_product_manufacturerid_not_found;
+        END IF;
+       
+        p_product_id := product_seq.NEXTVAL;
+        INSERT INTO product (product_id, product_name, quantity , price ,category_id,manufacturer_id , is_active )
+        VALUES (p_product_id, p_name, p_quantity , p_price ,p_category_id ,p_manufacturer_id ,p_is_active );
+    
+    EXCEPTION
+        WHEN ex_product_name_not_found THEN
+            DBMS_OUTPUT.PUT_LINE('PRODUCT NAME ENTERED ID INVALID');
+            
+        WHEN ex_product_PRICE_not_found THEN
+            DBMS_OUTPUT.PUT_LINE('PRODUCT PRICE ENTERED ID INVALID');
+            
+        WHEN ex_product_categoryid_not_found THEN
+            DBMS_OUTPUT.PUT_LINE('CATEGORY ID id not found');
+            
+        WHEN ex_product_manufacturerid_not_found THEN
+            DBMS_OUTPUT.PUT_LINE('MANUFACTURER ID id not found');     
+            
+    END insert_product; 
+    
+    --insert delivery partner
+    PROCEDURE insert_delivery_partner( 
+        P_delivery_partner_id OUT DELIVERY_PARTNER.DELIVERY_PARTNER_ID%TYPE,
+        P_delivery_partner_name DELIVERY_PARTNER.DELIVERY_PARTNER_NAME%TYPE 
+    )
+    AS
+        ex_delivery_partner_name_not_found EXCEPTION;
+    BEGIN
+        P_delivery_partner_id := 0;
+        
+        IF (TRIM(P_delivery_partner_name) = '' or P_delivery_partner_name is null) THEN
+            RAISE  ex_delivery_partner_name_not_found; 
+        END IF;
+        
+        P_delivery_partner_id := delivery_partner_seq.NEXTVAL;
+        INSERT INTO DELIVERY_PARTNER (DELIVERY_PARTNER_ID, DELIVERY_PARTNER_NAME)
+        VALUES (P_delivery_partner_id, P_delivery_partner_name );  
+    
+    EXCEPTION 
+        WHEN ex_delivery_partner_name_not_found THEN
+            DBMS_OUTPUT.PUT_LINE('Delivery partner NAME ENTERED ID INVALID');
+    END insert_delivery_partner;
     
 END inventory_utils; 
