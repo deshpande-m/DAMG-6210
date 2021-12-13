@@ -492,6 +492,13 @@ CREATE OR REPLACE PACKAGE inventory_utils AS
         P_delivery_partner_id OUT DELIVERY_PARTNER.DELIVERY_PARTNER_ID%TYPE,
         P_delivery_partner_name DELIVERY_PARTNER.DELIVERY_PARTNER_NAME%TYPE 
     );
+
+    --insert reviews
+    PROCEDURE insert_reviews( 
+        c_order_item_id reviews.order_item_id%TYPE,
+        c_review_notes reviews.review%TYPE,
+        c_rating reviews.rating%TYPE
+    );
     
 END inventory_utils;
 /
@@ -1260,5 +1267,64 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         WHEN ex_delivery_partner_name_not_found THEN
             DBMS_OUTPUT.PUT_LINE('Delivery partner NAME ENTERED ID INVALID');
     END insert_delivery_partner;
+
+    --insert reviews
+    PROCEDURE insert_reviews( 
+        c_order_item_id reviews.order_item_id%TYPE,
+        c_review_notes reviews.review%TYPE,
+        c_rating reviews.rating%TYPE
+    )
+    AS
+        ex_order_item_id_empty EXCEPTION;
+        ex_review_notes_empty EXCEPTION;
+        ex_rating_empty EXCEPTION;
+        ex_order_item_id_not_found EXCEPTION;
+        ex_invalid_rating_value EXCEPTION;
+        ex_order_not_delivered EXCEPTION;
+        c_order_id NUMBER;
+        c_order_status VARCHAR2(100);
+    BEGIN
+        
+        IF (TRIM(c_order_item_id) = '' or c_order_item_id is null) THEN
+            RAISE ex_order_item_id_empty;
+        ELSIF (TRIM(c_review_notes) = '' or c_review_notes is null) THEN
+            RAISE ex_review_notes_empty;
+        ELSIF (TRIM(c_rating) = '' or c_rating is null) THEN
+            RAISE ex_rating_empty;
+        END IF;
+        
+        IF validate_order_item_id(c_order_item_id) = 0 THEN
+            RAISE ex_order_item_id_not_found;
+        END IF;
+        
+        IF c_rating <=0 and c_rating > 5 THEN
+            RAISE ex_invalid_rating_value;
+        END IF;
+        
+        SELECT order_id INTO c_order_id FROM order_items WHERE order_item_id = c_order_item_id;
+        SELECT delivery_status INTO c_order_status FROM order_tracking WHERE order_id = c_order_id;
+        
+        IF c_order_status = 'DELIVERED' THEN
+            INSERT INTO reviews (review_id, order_item_id, review, review_date, rating)
+            VALUES (REVIEWS_SEQ.nextval, c_order_item_id, c_review_notes, SYSTIMESTAMP, c_rating);
+        ELSE
+            RAISE ex_order_not_delivered;
+        END IF;
+        
+    EXCEPTION
+        WHEN ex_order_item_id_empty THEN
+            DBMS_OUTPUT.PUT_LINE('Order Item id can not be null or empty');
+        WHEN ex_review_notes_empty THEN
+            DBMS_OUTPUT.PUT_LINE('Review text can not be null or empty');
+        WHEN ex_rating_empty THEN
+            DBMS_OUTPUT.PUT_LINE('Ratings can not be empty');
+        WHEN ex_order_item_id_not_found THEN
+            DBMS_OUTPUT.PUT_LINE('Order Item Id can not be found');
+        WHEN ex_invalid_rating_value THEN
+            DBMS_OUTPUT.PUT_LINE('Rating number is invalid. It should be from 1 to 5');
+        WHEN ex_order_not_delivered THEN
+            DBMS_OUTPUT.PUT_LINE('Review can not be given as the item is not delivered yet');
+            
+    END insert_reviews;
     
 END inventory_utils; 
