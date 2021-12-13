@@ -7,6 +7,8 @@ CREATE TABLE customer (
     is_active NUMBER 
 );
 
+
+
 CREATE TABLE address (
     address_id NUMBER PRIMARY KEY,
     customer_id NUMBER,
@@ -18,6 +20,8 @@ CREATE TABLE address (
     zip NUMBER,
     country VARCHAR2(50)
 );
+
+
 
 CREATE TABLE category (
     category_id NUMBER PRIMARY KEY,

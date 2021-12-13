@@ -409,7 +409,8 @@ CREATE OR REPLACE PACKAGE inventory_utils AS
 
     -- create transaction
     PROCEDURE create_transaction(
-        c_order_id orders.order_id%TYPE
+        c_order_id orders.order_id%TYPE,
+        c_payment_method transaction.
     );
 
     -- create order tracking
@@ -846,7 +847,7 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
 
     -- create order tracking
     PROCEDURE create_order_tracking(
-        c_order_id orders.order_id%TYPE
+        c_order_id orders.order_id%TYPE,
     )
     AS
         c_tracking_number order_tracking.tracking_number%TYPE;
