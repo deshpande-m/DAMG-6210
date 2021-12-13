@@ -410,7 +410,7 @@ CREATE OR REPLACE PACKAGE inventory_utils AS
     -- create transaction
     PROCEDURE create_transaction(
         c_order_id orders.order_id%TYPE,
-        c_payment_method transaction.
+        c_payment_method transaction.payment_method%TYPE
     );
 
     -- create order tracking
@@ -745,6 +745,8 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         ex_quantity_invalid EXCEPTION;
         ex_ordered_qty_exceeds EXCEPTION;
         ex_product_id_empty EXCEPTION;
+        ex_transaction_already_present EXCEPTION;
+        c_transaction_count NUMBER;
     BEGIN
         
         IF (TRIM(c_order_id) = '' or c_order_id is null) THEN
@@ -771,6 +773,12 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
             RAISE ex_product_qty_zero;
         ELSIF c_quantity > validate_product_qty(c_product_id) THEN
             RAISE ex_ordered_qty_exceeds;
+        END IF;
+        
+        SELECT COUNT(1) INTO c_transaction_count FROM transaction WHERE order_id = c_order_id;
+        
+        IF c_transaction_count > 0 THEN
+            RAISE ex_transaction_already_present;
         END IF;
         
         INSERT INTO order_items (order_item_id, order_id, quantity, product_id)
@@ -801,25 +809,31 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         WHEN ex_product_id_empty THEN
             DBMS_OUTPUT.PUT_LINE('Product id can not be null or empty');
             ROLLBACK TO revert_created_order;
-         WHEN ex_ordered_qty_exceeds THEN
+        WHEN ex_ordered_qty_exceeds THEN
             DBMS_OUTPUT.PUT_LINE('The quantity of the product ordered is greater than the current quantity of product');
             ROLLBACK TO revert_created_order;
+        WHEN ex_transaction_already_present THEN
+            DBMS_OUTPUT.PUT_LINE('Order item can not be added as trnsaction for this order has already been done. Please create a new order');
         
     END create_order_items;
 
     -- create transaction
     PROCEDURE create_transaction(
-        c_order_id orders.order_id%TYPE
+        c_order_id orders.order_id%TYPE,
+        c_payment_method transaction.payment_method%TYPE
     )
     AS
         c_total_price NUMBER;
         c_shipping_charges NUMBER;
         ex_order_id_not_found EXCEPTION;
         ex_order_id_empty EXCEPTION;
+        ex_payment_method_empty EXCEPTION;
     BEGIN
         
         IF (TRIM(c_order_id) = '' or c_order_id is null) THEN
             RAISE ex_order_id_empty;
+        ELSIF (TRIM(c_payment_method) = '' or c_payment_method is null) THEN
+            RAISE ex_payment_method_empty;
         END IF;
         
         IF validate_order_id(c_order_id) = 0 THEN
@@ -842,12 +856,15 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         WHEN ex_order_id_empty THEN
             DBMS_OUTPUT.PUT_LINE('Order id can not be null or empty');
             ROLLBACK TO revert_created_order;
+        WHEN ex_payment_method_empty THEN
+            DBMS_OUTPUT.PUT_LINE('Payment method can not be null or empty');
+            ROLLBACK TO revert_created_order;
         
     END create_transaction;
 
     -- create order tracking
     PROCEDURE create_order_tracking(
-        c_order_id orders.order_id%TYPE,
+        c_order_id orders.order_id%TYPE
     )
     AS
         c_tracking_number order_tracking.tracking_number%TYPE;
