@@ -690,11 +690,12 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         ex_customer_id_empty EXCEPTION;
         ex_address_id_empty EXCEPTION;
         ex_shipping_type_empty EXCEPTION;
-        
+        ex_address_not_corresponds_to_customer EXCEPTION;
         c_shipping_charges NUMBER;
+        p_customer_id NUMBER;
     BEGIN
         c_order_id := -1;
-        
+        p_customer_id := 0;
         IF (TRIM(c_customer_id) = '' or c_customer_id is null) THEN
             RAISE ex_customer_id_empty;
         ELSIF (TRIM(c_address_id) = '' or c_address_id is null) THEN
@@ -712,10 +713,15 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         END IF;
         
         IF validate_customer_id(c_customer_id) = 1 and validate_address_id(c_address_id) = 1 THEN
-            c_order_id := orders_seq.NEXTVAL;
-            INSERT INTO orders (order_id, order_date, shipping_type, customer_id, shipping_charges, address_id)
-            VALUES (c_order_id, SYSTIMESTAMP,c_shipping_type, c_customer_id, c_shipping_charges, c_address_id);
-            --COMMIT;
+        
+            SELECT customer_id INTO p_customer_id FROM address WHERE address_id = c_address_id;
+            IF p_customer_id = c_customer_id THEN
+                c_order_id := orders_seq.NEXTVAL;
+                INSERT INTO orders (order_id, order_date, shipping_type, customer_id, shipping_charges, address_id)
+                VALUES (c_order_id, SYSTIMESTAMP,c_shipping_type, c_customer_id, c_shipping_charges, c_address_id);
+            ELSE
+                RAISE ex_address_not_corresponds_to_customer;
+            END IF;
         ELSIF validate_customer_id(c_customer_id) = 0 THEN
             RAISE ex_customer_not_found;
         ELSIF validate_customer_id(c_customer_id) = 0 THEN
@@ -735,6 +741,8 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
             DBMS_OUTPUT.PUT_LINE('Address id can not be null or empty');
         WHEN ex_shipping_type_empty THEN
             DBMS_OUTPUT.PUT_LINE('Shipping type can not be null or empty');
+        WHEN ex_address_not_corresponds_to_customer THEN
+            DBMS_OUTPUT.PUT_LINE('Adress Id provided doesnt belong to the customer id passed while creating order');
             
     END create_order;
 
