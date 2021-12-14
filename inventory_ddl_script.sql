@@ -8,6 +8,11 @@ CREATE OR REPLACE PACKAGE create_delete_utils AS
 
     -- delete table records
     PROCEDURE delete_records;
+
+    --create type
+    PROCEDURE create_type(
+        c_type_name VARCHAR2
+    );
     
 END create_delete_utils;
 /
@@ -157,6 +162,9 @@ CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
 
                 EXECUTE IMMEDIATE
                 'CREATE SEQUENCE transaction_seq START WITH 1';
+
+                EXECUTE IMMEDIATE
+                'CREATE INDEX transaction_order_id_I ON TRANSACTION (order_id);';
                 
             ELSIF c_upper_table_name = 'ORDER_TRACKING' THEN
                 EXECUTE IMMEDIATE
@@ -174,6 +182,12 @@ CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
                 EXECUTE IMMEDIATE
                 'CREATE SEQUENCE order_tracking_seq START WITH 1';
                 
+                EXECUTE IMMEDIATE
+                'CREATE INDEX order_tracking_tracking_number_I ON ORDER_TRACKING (tracking_number)';
+                
+                EXECUTE IMMEDIATE
+                'CREATE INDEX order_tracking_order_id_I ON ORDER_TRACKING (order_id);';
+
             ELSIF c_upper_table_name = 'REVIEWS' THEN
                 EXECUTE IMMEDIATE
                 'CREATE TABLE reviews (
@@ -187,6 +201,9 @@ CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
                 
                 EXECUTE IMMEDIATE
                 'CREATE SEQUENCE reviews_seq START WITH 1';
+
+                EXECUTE IMMEDIATE
+                'CREATE INDEX reviews_order_item_id_I ON REVIEWS (order_item_id);';
                 
             ELSE 
                 RAISE ex_table_not_found;
@@ -343,6 +360,36 @@ CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
         
     END delete_records;
     
+    
+    PROCEDURE create_type(
+        c_type_name VARCHAR2
+    )
+    AS
+        c_count NUMBER;
+        ex_type_not_found EXCEPTION;
+    BEGIN
+        SELECT count(1) INTO c_count FROM dba_types where type_name = c_type_name;
+        IF c_count = 0 THEN
+            IF c_type_name = 'PRODUCT_OBJ' THEN
+                EXECUTE IMMEDIATE
+                'create type PRODUCT_OBJ as object(
+                    product_id number,
+                    product_name varchar2(50),
+                    category_name varchar2(50)
+                )';
+
+            ELSIF c_type_name = 'PRODUCT_REC' THEN
+                EXECUTE IMMEDIATE
+                'create type PRODUCT_REC as table of PRODUCT_OBJ';
+            ELSE 
+                RAISE ex_type_not_found;
+            END IF;    
+        END IF;
+    EXCEPTION
+        WHEN ex_type_not_found THEN
+            DBMS_OUTPUT.PUT_LINE('Type name is invalid');
+            
+    END create_type;
 END create_delete_utils;
 /
 
@@ -359,6 +406,8 @@ BEGIN
     create_delete_utils.create_table('TRANSACTION');
     create_delete_utils.create_table('ORDER_TRACKING');
     create_delete_utils.create_table('REVIEWS');
+    create_delete_utils.create_type('PRODUCT_OBJ');
+    create_delete_utils.create_type('PRODUCT_REC');
 END;
 /
 
@@ -391,6 +440,9 @@ CREATE OR REPLACE PACKAGE inventory_utils AS
     
     -- fetching price of a product
     FUNCTION get_product_price(c_product_id order_items.product_id%TYPE) RETURN NUMBER;
+
+    -- get product recommendations
+    FUNCTION get_products_rec(c_product_id NUMBER) RETURN product_rec;
 
     -- create an Order 
     PROCEDURE create_order(
@@ -674,6 +726,21 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         RETURN c_total_price; 
     
     END get_total_order_price;
+
+    -- get product recommendation
+    FUNCTION get_products_rec (c_product_id NUMBER)
+        RETURN product_rec
+    AS
+        return_value product_rec;
+    BEGIN
+        SELECT product_obj(product_id, product_name, category_name)
+        bulk collect INTO return_value      
+        FROM product p
+        INNER JOIN category c
+        ON p.category_id = c.category_id
+        WHERE c.category_id = (SELECT DISTINCT category_id FROM product WHERE product_id = c_product_id);
+        RETURN return_value;
+    END get_products_rec;
 
     -- create an order 
     PROCEDURE create_order(
@@ -1432,6 +1499,15 @@ AFTER UPDATE ON ORDER_TRACKING
 FOR EACH ROW
 BEGIN
     UPDATE orders SET orders.delivery_datetime = SYSDATE where orders.order_id = :new.order_id and :new.delivery_status = 'DELIVERED';
+END;
+/
+
+/*  Update shipping date to shipped date on orders when delivery status is set to shipped on tracking */
+CREATE OR REPLACE TRIGGER SHIPPINGDATEUPDATE
+AFTER UPDATE ON ORDER_TRACKING 
+FOR EACH ROW
+BEGIN
+    UPDATE orders SET orders.shipping_date = SYSDATE where orders.order_id = :new.order_id and :new.delivery_status = 'SHIPPED';
 END;
 /
 
