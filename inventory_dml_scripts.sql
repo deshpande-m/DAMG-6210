@@ -528,11 +528,19 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('EC6:');
     inventory_utils.update_order_tracking_status(c_order_id, 'DUMMY_STATUS');
     
+    -- updating order status 
+    inventory_utils.update_order_tracking_status(c_order_id, 'SHIPPED');
+    --updating order status
+    inventory_utils.update_order_tracking_status(c_order_id, 'IN TRANSIT');
+    -- EC7: can not change status back to shipped once it is in transit
+    DBMS_OUTPUT.PUT_LINE('EC7:');
+    inventory_utils.update_order_tracking_status(c_order_id, 'SHIPPED');
+    
     -- inactivating customer
     inventory_utils.inactivate_customer(1);
     
-    -- EC7: inactive users can not place orders
-    DBMS_OUTPUT.PUT_LINE('EC7:');
+    -- EC8: inactive users can not place orders
+    DBMS_OUTPUT.PUT_LINE('EC8:');
     inventory_utils.create_order(1, 1, 'Standard', c_order_id);
     
     -- activating customer
@@ -543,17 +551,15 @@ BEGIN
     --inactivating product
     inventory_utils.inactivate_product(47);
     
-    -- EC8: will not be able to place orders for inactive products. Transaction will be rolled back
-    DBMS_OUTPUT.PUT_LINE('EC8:');
+    -- EC9: will not be able to place orders for inactive products. Transaction will be rolled back
+    DBMS_OUTPUT.PUT_LINE('EC9:');
     inventory_utils.create_order_items(c_order_id, 1, 47);
     
     -- activating product
     inventory_utils.activate_product(47);
     
-    -- EC9: wil not be able to place orders as address id 2 doesnt belong to customer 1
-    DBMS_OUTPUT.PUT_LINE('EC9:');
+    -- EC10: wil not be able to place orders as address id 2 doesnt belong to customer 1
+    DBMS_OUTPUT.PUT_LINE('EC10:');
     inventory_utils.create_order(1, 2, 'Standard', c_order_id);
-    
-    
 END;
 /
