@@ -937,7 +937,8 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         WHEN ex_transaction_already_present THEN
             DBMS_OUTPUT.PUT_LINE('Order item can not be added as transaction for this order has already been done. Please create a new order');
         WHEN ex_product_id_not_active THEN
-            DBMS_OUTPUT.PUT_LINE('Product id is not active');         
+            DBMS_OUTPUT.PUT_LINE('Product id is not active'); 
+            ROLLBACK TO revert_created_order;        
         
     END create_order_items;
 
@@ -968,8 +969,8 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         
         c_total_price := get_total_order_price(c_order_id);
         
-        INSERT INTO transaction (transaction_id, order_id, transaction_date, total_amount)
-        VALUES (transaction_seq.NEXTVAL, c_order_id, SYSTIMESTAMP, c_total_price + c_shipping_charges);
+        INSERT INTO transaction (transaction_id, order_id, transaction_date, total_amount, payment_method)
+        VALUES (transaction_seq.NEXTVAL, c_order_id, SYSTIMESTAMP, c_total_price + c_shipping_charges, c_payment_method);
         
         UPDATE orders SET order_amount = c_total_price WHERE order_id = c_order_id;
         
