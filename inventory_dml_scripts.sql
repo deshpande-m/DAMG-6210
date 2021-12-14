@@ -146,7 +146,7 @@ DECLARE
     c_order_id NUMBER;
 BEGIN
     -- order flow 1
-    inventory_utils.create_order(1, 1, 'Standard', c_order_id);
+    inventory_utils.create_order(1, 1, 'Standard', c_order_id, '');
     
     inventory_utils.create_order_items(c_order_id, 2, 1);
     inventory_utils.create_order_items(c_order_id, 1, 2);
@@ -154,7 +154,7 @@ BEGIN
     inventory_utils.create_order_items(c_order_id, 1, 4);
     inventory_utils.create_order_items(c_order_id, 1, 5);
     
-    inventory_utils.create_transaction(c_order_id, 'CREDIT CARD');
+    inventory_utils.create_transaction(c_order_id, 'CREDIT CARD', '');
     inventory_utils.create_order_tracking(c_order_id);
 END;
 /
@@ -187,7 +187,7 @@ DECLARE
     c_order_id NUMBER;
 BEGIN
     -- order flow 2
-    inventory_utils.create_order(2, 2, 'Standard', c_order_id);
+    inventory_utils.create_order(2, 2, 'Standard', c_order_id, '');
     
     inventory_utils.create_order_items(c_order_id, 1, 1);
     inventory_utils.create_order_items(c_order_id, 1, 6);
@@ -195,7 +195,7 @@ BEGIN
     inventory_utils.create_order_items(c_order_id, 1, 44);
     inventory_utils.create_order_items(c_order_id, 1, 5);
     
-    inventory_utils.create_transaction(c_order_id, 'DEBIT CARD');
+    inventory_utils.create_transaction(c_order_id, 'DEBIT CARD', '');
     inventory_utils.create_order_tracking(c_order_id);
     
     inventory_utils.update_order_tracking_status(c_order_id, 'SHIPPED');
@@ -211,7 +211,7 @@ DECLARE
     c_order_id NUMBER;
 BEGIN
     -- order flow 3
-    inventory_utils.create_order(3, 3, 'Standard', c_order_id);
+    inventory_utils.create_order(3, 3, 'Standard', c_order_id, '');
     
     inventory_utils.create_order_items(c_order_id, 1, 8);
     inventory_utils.create_order_items(c_order_id, 1, 9);
@@ -219,14 +219,14 @@ BEGIN
     inventory_utils.create_order_items(c_order_id, 1, 2);
     inventory_utils.create_order_items(c_order_id, 1, 10);
     
-    inventory_utils.create_transaction(c_order_id, 'CREDIT CARD');
+    inventory_utils.create_transaction(c_order_id, 'CREDIT CARD', '');
     inventory_utils.create_order_tracking(c_order_id);
     
     inventory_utils.update_order_tracking_status(c_order_id, 'SHIPPED');
     inventory_utils.update_order_tracking_status(c_order_id, 'DELIVERED');
     
     -- order flow 4
-    inventory_utils.create_order(4, 4, 'Standard', c_order_id);
+    inventory_utils.create_order(4, 4, 'Standard', c_order_id, '');
     
     inventory_utils.create_order_items(c_order_id, 1, 11);
     inventory_utils.create_order_items(c_order_id, 1, 12);
@@ -234,14 +234,14 @@ BEGIN
     inventory_utils.create_order_items(c_order_id, 1, 2);
     inventory_utils.create_order_items(c_order_id, 1, 5);
     
-    inventory_utils.create_transaction(c_order_id, 'CREDIT CARD');
+    inventory_utils.create_transaction(c_order_id, 'CREDIT CARD', '');
     inventory_utils.create_order_tracking(c_order_id);
     
     inventory_utils.update_order_tracking_status(c_order_id, 'SHIPPED');
     inventory_utils.update_order_tracking_status(c_order_id, 'DELIVERED');
     
     -- order flow 5
-    inventory_utils.create_order(5, 5, 'Standard', c_order_id);
+    inventory_utils.create_order(5, 5, 'Standard', c_order_id, '');
     
     inventory_utils.create_order_items(c_order_id, 1, 13);
     inventory_utils.create_order_items(c_order_id, 1, 2);
@@ -249,14 +249,14 @@ BEGIN
     inventory_utils.create_order_items(c_order_id, 1, 11);
     inventory_utils.create_order_items(c_order_id, 1, 30);
     
-    inventory_utils.create_transaction(c_order_id, 'CASH ON DELIVERY');
+    inventory_utils.create_transaction(c_order_id, 'CASH ON DELIVERY', '');
     inventory_utils.create_order_tracking(c_order_id);
     
     inventory_utils.update_order_tracking_status(c_order_id, 'SHIPPED');
     inventory_utils.update_order_tracking_status(c_order_id, 'DELIVERED');
     
     -- order flow 6
-    inventory_utils.create_order(6, 6, 'Standard', c_order_id);
+    inventory_utils.create_order(6, 6, 'Standard', c_order_id, '');
     
     inventory_utils.create_order_items(c_order_id, 1, 14);
     inventory_utils.create_order_items(c_order_id, 1, 5);
@@ -264,14 +264,14 @@ BEGIN
     inventory_utils.create_order_items(c_order_id, 1, 38);
     inventory_utils.create_order_items(c_order_id, 1, 2);
     
-    inventory_utils.create_transaction(c_order_id, 'APPLE PAY');
+    inventory_utils.create_transaction(c_order_id, 'APPLE PAY', '');
     inventory_utils.create_order_tracking(c_order_id);
     
     inventory_utils.update_order_tracking_status(c_order_id, 'SHIPPED');
     inventory_utils.update_order_tracking_status(c_order_id, 'DELIVERED');
     
     -- order flow 7
-    inventory_utils.create_order(7, 7, 'Standard', c_order_id);
+    inventory_utils.create_order(7, 7, 'Standard', c_order_id, '');
     
     inventory_utils.create_order_items(c_order_id, 1, 11);
     inventory_utils.create_order_items(c_order_id, 1, 12);
@@ -279,14 +279,14 @@ BEGIN
     inventory_utils.create_order_items(c_order_id, 1, 22);
     inventory_utils.create_order_items(c_order_id, 1, 16);
     
-    inventory_utils.create_transaction(c_order_id, 'CREDIT CARD');
+    inventory_utils.create_transaction(c_order_id, 'CREDIT CARD', '');
     inventory_utils.create_order_tracking(c_order_id);
     
     inventory_utils.update_order_tracking_status(c_order_id, 'SHIPPED');
     inventory_utils.update_order_tracking_status(c_order_id, 'DELIVERED');
     
     -- order flow 8
-    inventory_utils.create_order(8, 8, 'Express', c_order_id);
+    inventory_utils.create_order(8, 8, 'Express', c_order_id, '');
     
     inventory_utils.create_order_items(c_order_id, 1, 18);
     inventory_utils.create_order_items(c_order_id, 1, 19);
@@ -294,14 +294,14 @@ BEGIN
     inventory_utils.create_order_items(c_order_id, 1, 7);
     inventory_utils.create_order_items(c_order_id, 1, 23);
     
-    inventory_utils.create_transaction(c_order_id, 'CREDIT CARD');
+    inventory_utils.create_transaction(c_order_id, 'CREDIT CARD', '');
     inventory_utils.create_order_tracking(c_order_id);
     
     inventory_utils.update_order_tracking_status(c_order_id, 'SHIPPED');
     inventory_utils.update_order_tracking_status(c_order_id, 'DELIVERED');
     
     -- order flow 9
-    inventory_utils.create_order(9, 9, 'Express', c_order_id);
+    inventory_utils.create_order(9, 9, 'Express', c_order_id, '');
     
     inventory_utils.create_order_items(c_order_id, 1, 21);
     inventory_utils.create_order_items(c_order_id, 1, 20);
@@ -309,14 +309,14 @@ BEGIN
     inventory_utils.create_order_items(c_order_id, 1, 11);
     inventory_utils.create_order_items(c_order_id, 1, 15);
     
-    inventory_utils.create_transaction(c_order_id, 'GIFT CARD');
+    inventory_utils.create_transaction(c_order_id, 'GIFT CARD', '');
     inventory_utils.create_order_tracking(c_order_id);
     
     inventory_utils.update_order_tracking_status(c_order_id, 'SHIPPED');
     inventory_utils.update_order_tracking_status(c_order_id, 'DELIVERED');
     
     -- order flow 10
-    inventory_utils.create_order(10, 10, 'Express', c_order_id);
+    inventory_utils.create_order(10, 10, 'Express', c_order_id, '');
     
     inventory_utils.create_order_items(c_order_id, 1, 16);
     inventory_utils.create_order_items(c_order_id, 1, 12);
@@ -324,14 +324,14 @@ BEGIN
     inventory_utils.create_order_items(c_order_id, 1, 2);
     inventory_utils.create_order_items(c_order_id, 1, 3);
     
-    inventory_utils.create_transaction(c_order_id, 'CASH ON DELIVERY');
+    inventory_utils.create_transaction(c_order_id, 'CASH ON DELIVERY', '');
     inventory_utils.create_order_tracking(c_order_id);
     
     inventory_utils.update_order_tracking_status(c_order_id, 'SHIPPED');
     inventory_utils.update_order_tracking_status(c_order_id, 'DELIVERED');
     
     -- order flow 11
-    inventory_utils.create_order(11, 11, 'Express', c_order_id);
+    inventory_utils.create_order(11, 11, 'Express', c_order_id, '');
     
     inventory_utils.create_order_items(c_order_id, 1, 11);
     inventory_utils.create_order_items(c_order_id, 1, 24);
@@ -339,14 +339,14 @@ BEGIN
     inventory_utils.create_order_items(c_order_id, 1, 25);
     inventory_utils.create_order_items(c_order_id, 1, 32);
     
-    inventory_utils.create_transaction(c_order_id, 'CREDIT CARD');
+    inventory_utils.create_transaction(c_order_id, 'CREDIT CARD', '');
     inventory_utils.create_order_tracking(c_order_id);
     
     inventory_utils.update_order_tracking_status(c_order_id, 'SHIPPED');
     inventory_utils.update_order_tracking_status(c_order_id, 'DELIVERED');
     
     -- order flow 12
-    inventory_utils.create_order(12, 12, 'Express', c_order_id);
+    inventory_utils.create_order(12, 12, 'Express', c_order_id, '');
     
     inventory_utils.create_order_items(c_order_id, 1, 11);
     inventory_utils.create_order_items(c_order_id, 1, 29);
@@ -354,14 +354,14 @@ BEGIN
     inventory_utils.create_order_items(c_order_id, 1, 41);
     inventory_utils.create_order_items(c_order_id, 1, 35);
     
-    inventory_utils.create_transaction(c_order_id, 'DEBIT CARD');
+    inventory_utils.create_transaction(c_order_id, 'DEBIT CARD', '');
     inventory_utils.create_order_tracking(c_order_id);
     
     inventory_utils.update_order_tracking_status(c_order_id, 'SHIPPED');
     inventory_utils.update_order_tracking_status(c_order_id, 'DELIVERED');
     
     -- order flow 13
-    inventory_utils.create_order(13, 13, 'Express', c_order_id);
+    inventory_utils.create_order(13, 13, 'Express', c_order_id, '');
     
     inventory_utils.create_order_items(c_order_id, 1, 4);
     inventory_utils.create_order_items(c_order_id, 1, 22);
@@ -369,14 +369,14 @@ BEGIN
     inventory_utils.create_order_items(c_order_id, 1, 40);
     inventory_utils.create_order_items(c_order_id, 1, 31);
     
-    inventory_utils.create_transaction(c_order_id, 'CREDIT CARD');
+    inventory_utils.create_transaction(c_order_id, 'CREDIT CARD', '');
     inventory_utils.create_order_tracking(c_order_id);
     
     inventory_utils.update_order_tracking_status(c_order_id, 'SHIPPED');
     inventory_utils.update_order_tracking_status(c_order_id, 'DELIVERED');
     
     -- order flow 14
-    inventory_utils.create_order(14, 14, 'Express', c_order_id);
+    inventory_utils.create_order(14, 14, 'Express', c_order_id, '');
     
     inventory_utils.create_order_items(c_order_id, 1, 1);
     inventory_utils.create_order_items(c_order_id, 1, 2);
@@ -384,7 +384,79 @@ BEGIN
     inventory_utils.create_order_items(c_order_id, 1, 43);
     inventory_utils.create_order_items(c_order_id, 1, 23);
     
-    inventory_utils.create_transaction(c_order_id, 'DEBIT CARD');
+    inventory_utils.create_transaction(c_order_id, 'DEBIT CARD', '');
+    inventory_utils.create_order_tracking(c_order_id);
+    
+    inventory_utils.update_order_tracking_status(c_order_id, 'SHIPPED');
+    inventory_utils.update_order_tracking_status(c_order_id, 'DELIVERED');
+
+    -- order flow 1 for orders with previous years 2015
+    inventory_utils.create_order(14, 14, 'Express', c_order_id, DATE '2015-01-04');
+    
+    inventory_utils.create_order_items(c_order_id, 1, 4);
+    inventory_utils.create_order_items(c_order_id, 2, 5);
+    
+    inventory_utils.create_transaction(c_order_id, 'DEBIT CARD', DATE '2015-01-04');
+    inventory_utils.create_order_tracking(c_order_id);
+    
+    inventory_utils.update_order_tracking_status(c_order_id, 'SHIPPED');
+    inventory_utils.update_order_tracking_status(c_order_id, 'DELIVERED');
+
+    -- order flow 2 for orders with previous years 2015
+    inventory_utils.create_order(12, 12, 'Express', c_order_id, DATE '2015-07-07');
+    
+    inventory_utils.create_order_items(c_order_id, 1, 6);
+    inventory_utils.create_order_items(c_order_id, 2, 7);
+    
+    inventory_utils.create_transaction(c_order_id, 'DEBIT CARD', DATE '2015-07-07');
+    inventory_utils.create_order_tracking(c_order_id);
+    
+    inventory_utils.update_order_tracking_status(c_order_id, 'SHIPPED');
+    inventory_utils.update_order_tracking_status(c_order_id, 'DELIVERED');
+
+    -- order flow 3 for orders with previous years 2015
+    inventory_utils.create_order(12, 12, 'Express', c_order_id, DATE '2015-02-08');
+    
+    inventory_utils.create_order_items(c_order_id, 3, 1);
+    inventory_utils.create_order_items(c_order_id, 4, 2);
+    
+    inventory_utils.create_transaction(c_order_id, 'DEBIT CARD', DATE '2015-02-08');
+    inventory_utils.create_order_tracking(c_order_id);
+    
+    inventory_utils.update_order_tracking_status(c_order_id, 'SHIPPED');
+    inventory_utils.update_order_tracking_status(c_order_id, 'DELIVERED');
+
+    -- order flow 4 for orders with previous years 2015
+    inventory_utils.create_order(10, 10, 'Express', c_order_id, DATE '2015-08-10');
+    
+    inventory_utils.create_order_items(c_order_id, 1, 1);
+    inventory_utils.create_order_items(c_order_id, 1, 2);
+    
+    inventory_utils.create_transaction(c_order_id, 'DEBIT CARD', DATE '2015-08-10');
+    inventory_utils.create_order_tracking(c_order_id);
+    
+    inventory_utils.update_order_tracking_status(c_order_id, 'SHIPPED');
+    inventory_utils.update_order_tracking_status(c_order_id, 'DELIVERED');
+
+    -- order flow 5 for orders with previous years 2017
+    inventory_utils.create_order(9, 9, 'Express', c_order_id, DATE '2017-08-10');
+    
+    inventory_utils.create_order_items(c_order_id, 4, 1);
+    inventory_utils.create_order_items(c_order_id, 5, 2);
+    
+    inventory_utils.create_transaction(c_order_id, 'DEBIT CARD', DATE '2017-08-10');
+    inventory_utils.create_order_tracking(c_order_id);
+    
+    inventory_utils.update_order_tracking_status(c_order_id, 'SHIPPED');
+    inventory_utils.update_order_tracking_status(c_order_id, 'DELIVERED');
+
+    -- order flow 5 for orders with previous years 2017
+    inventory_utils.create_order(2, 2, 'Express', c_order_id, DATE '2017-01-10');
+    
+    inventory_utils.create_order_items(c_order_id, 6, 4);
+    inventory_utils.create_order_items(c_order_id, 7, 5);
+    
+    inventory_utils.create_transaction(c_order_id, 'DEBIT CARD', DATE '2017-01-10');
     inventory_utils.create_order_tracking(c_order_id);
     
     inventory_utils.update_order_tracking_status(c_order_id, 'SHIPPED');
@@ -476,39 +548,39 @@ BEGIN
     inventory_utils.insert_product(c_product_id, 'Brita Water Bottle', 15, 32, 2, 2, 1);
     inventory_utils.insert_product(c_product_id, 'Brita Filters 6 pack', 15, 19, 2, 2, 1);
     
-    inventory_utils.create_order(1, 1, 'Standard', c_order_id);
+    inventory_utils.create_order(1, 1, 'Standard', c_order_id, '');
     
     -- EC1: quantity of the product is 0 and requested quantity is 1. Transaction will be rolled back
     DBMS_OUTPUT.PUT_LINE('EC1:');
     inventory_utils.create_order_items(c_order_id, 1, 45);
     
-    inventory_utils.create_order(1, 1, 'Standard', c_order_id);
+    inventory_utils.create_order(1, 1, 'Standard', c_order_id, '');
     
     -- EC2: quantity of the product is 13 and requested quantity is 16. Transaction will be rolled back
     DBMS_OUTPUT.PUT_LINE('EC2:');
     inventory_utils.create_order_items(c_order_id, 16, 46);
     
-    inventory_utils.create_order(1, 1, 'Express', c_order_id);
+    inventory_utils.create_order(1, 1, 'Express', c_order_id, '');
     
     -- EC3: adding a product that doesnt exist. Transaction will be rolled back
     DBMS_OUTPUT.PUT_LINE('EC3:');
     inventory_utils.create_order_items(c_order_id, 10, 100);
     
-    inventory_utils.create_transaction(c_order_id, 'CARD');
+    inventory_utils.create_transaction(c_order_id, 'CARD', '');
     inventory_utils.create_order_tracking(c_order_id);
     
     -- updated the product quantiy from 0 to 100
     inventory_utils.update_product(45, 'Quantity', 100);
     
     -- creating order again with updated quantity
-    inventory_utils.create_order(1, 1, 'Standard', c_order_id);
+    inventory_utils.create_order(1, 1, 'Standard', c_order_id, '');
     
     -- quantity of the product has been updated
     inventory_utils.create_order_items(c_order_id, 10, 45);
     -- quantity of the product requested is redueced
     inventory_utils.create_order_items(c_order_id, 15, 46);
     
-    inventory_utils.create_transaction(c_order_id, 'CARD');
+    inventory_utils.create_transaction(c_order_id, 'CARD', '');
     inventory_utils.create_order_tracking(c_order_id);
     
     -- EC4: adding an order item after the order is placed
@@ -536,12 +608,12 @@ BEGIN
     
     -- EC8: inactive users can not place orders
     DBMS_OUTPUT.PUT_LINE('EC8:');
-    inventory_utils.create_order(1, 1, 'Standard', c_order_id);
+    inventory_utils.create_order(1, 1, 'Standard', c_order_id, '');
     
     -- activating customer
     inventory_utils.activate_customer(1);
     
-    inventory_utils.create_order(1, 1, 'Standard', c_order_id);
+    inventory_utils.create_order(1, 1, 'Standard', c_order_id, '');
     
     --inactivating product
     inventory_utils.inactivate_product(47);
@@ -555,6 +627,6 @@ BEGIN
     
     -- EC10: wil not be able to place orders as address id 2 doesnt belong to customer 1
     DBMS_OUTPUT.PUT_LINE('EC10:');
-    inventory_utils.create_order(1, 2, 'Standard', c_order_id);
+    inventory_utils.create_order(1, 2, 'Standard', c_order_id, '');
 END;
 /

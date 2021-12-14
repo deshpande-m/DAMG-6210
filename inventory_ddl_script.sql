@@ -469,7 +469,8 @@ CREATE OR REPLACE PACKAGE inventory_utils AS
     -- create transaction
     PROCEDURE create_transaction(
         c_order_id orders.order_id%TYPE,
-        c_payment_method transaction.payment_method%TYPE
+        c_payment_method transaction.payment_method%TYPE,
+        c_order_date orders.order_date%TYPE
     );
 
     -- create order tracking
@@ -952,7 +953,8 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
     -- create transaction
     PROCEDURE create_transaction(
         c_order_id orders.order_id%TYPE,
-        c_payment_method transaction.payment_method%TYPE
+        c_payment_method transaction.payment_method%TYPE,
+        c_order_date orders.order_date%TYPE
     )
     AS
         c_total_price NUMBER;
@@ -976,8 +978,13 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         
         c_total_price := get_total_order_price(c_order_id);
         
-        INSERT INTO transaction (transaction_id, order_id, transaction_date, total_amount, payment_method)
+        IF (c_order_date = '' or c_order_date is null) THEN
+            INSERT INTO transaction (transaction_id, order_id, transaction_date, total_amount, payment_method)
         VALUES (transaction_seq.NEXTVAL, c_order_id, SYSTIMESTAMP, c_total_price + c_shipping_charges, c_payment_method);
+        ELSE
+            INSERT INTO transaction (transaction_id, order_id, transaction_date, total_amount, payment_method)
+        VALUES (transaction_seq.NEXTVAL, c_order_id, c_order_date, c_total_price + c_shipping_charges, c_payment_method);
+        END IF;
         
         UPDATE orders SET order_amount = c_total_price WHERE order_id = c_order_id;
         
