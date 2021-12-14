@@ -60,39 +60,39 @@ BEGIN
     inventory_utils.insert_address(c_address_id,14,'347-7666 Iaculis St.','32 S Madison St','FLORIDA','AL',72343,'USA');
     
     -- insert manufacturer records
-    inventory_utils.insert_manufacturer(c_manufacturer_id,'Walmart','Shopping store'); --1
-    inventory_utils.insert_manufacturer(c_manufacturer_id,'Target','general merchandise'); --2
-    inventory_utils.insert_manufacturer(c_manufacturer_id,'Stop and Shop','General Store'); --3
-    inventory_utils.insert_manufacturer(c_manufacturer_id,'Huawei','Telecommunications equipment, Electronics'); --4
-    inventory_utils.insert_manufacturer(c_manufacturer_id,'Logitech','Telecommunications equipment, Electronics'); --5
-    inventory_utils.insert_manufacturer(c_manufacturer_id,'HP','Laptop Dealers'); --6
-    inventory_utils.insert_manufacturer(c_manufacturer_id,'Apple','Products'); --7
-    inventory_utils.insert_manufacturer(c_manufacturer_id,'Mosiso','Laptop Dealer'); --8
-    inventory_utils.insert_manufacturer(c_manufacturer_id,'Dell','Laptop brands'); --9
-    inventory_utils.insert_manufacturer(c_manufacturer_id,'Nike','apparels'); --10
-    inventory_utils.insert_manufacturer(c_manufacturer_id,'Levis','apparels'); --11
-    inventory_utils.insert_manufacturer(c_manufacturer_id,'Samsung Electronics','Electronics, various'); --12
-    inventory_utils.insert_manufacturer(c_manufacturer_id,'LG','Electronics'); --13
-    inventory_utils.insert_manufacturer(c_manufacturer_id,'BEST BUY Appliances','Big electronics store'); --14
-    inventory_utils.insert_manufacturer(c_manufacturer_id,'CVS Pharmacy','Pharmacy and Medical'); --15
-    inventory_utils.insert_manufacturer(c_manufacturer_id,'Walgreens','Pharmacy and Medical'); --16
-    inventory_utils.insert_manufacturer(c_manufacturer_id,'PaperSauce','Stationary'); --17
-    inventory_utils.insert_manufacturer(c_manufacturer_id,'Stationary Co','Stationary'); --18
-    inventory_utils.insert_manufacturer(c_manufacturer_id,'Yale Applicances','various appliances available'); --19
-    inventory_utils.insert_manufacturer(c_manufacturer_id,'AAA Applicances','various appliances available'); --20
-    inventory_utils.insert_manufacturer(c_manufacturer_id,'Ulta','beauty products'); --21
-    inventory_utils.insert_manufacturer(c_manufacturer_id,'Lakme','beauty brands'); --22
+    inventory_utils.insert_manufacturer(c_manufacturer_id,'Walmart','Shopping store'); 
+    inventory_utils.insert_manufacturer(c_manufacturer_id,'Target','general merchandise'); 
+    inventory_utils.insert_manufacturer(c_manufacturer_id,'Stop and Shop','General Store'); 
+    inventory_utils.insert_manufacturer(c_manufacturer_id,'Huawei','Telecommunications equipment, Electronics');
+    inventory_utils.insert_manufacturer(c_manufacturer_id,'Logitech','Telecommunications equipment, Electronics');
+    inventory_utils.insert_manufacturer(c_manufacturer_id,'HP','Laptop Dealers');
+    inventory_utils.insert_manufacturer(c_manufacturer_id,'Apple','Products');
+    inventory_utils.insert_manufacturer(c_manufacturer_id,'Mosiso','Laptop Dealer');
+    inventory_utils.insert_manufacturer(c_manufacturer_id,'Dell','Laptop brands');
+    inventory_utils.insert_manufacturer(c_manufacturer_id,'Nike','apparels');
+    inventory_utils.insert_manufacturer(c_manufacturer_id,'Levis','apparels');
+    inventory_utils.insert_manufacturer(c_manufacturer_id,'Samsung Electronics','Electronics, various');
+    inventory_utils.insert_manufacturer(c_manufacturer_id,'LG','Electronics');
+    inventory_utils.insert_manufacturer(c_manufacturer_id,'BEST BUY Appliances','Big electronics store');
+    inventory_utils.insert_manufacturer(c_manufacturer_id,'CVS Pharmacy','Pharmacy and Medical');
+    inventory_utils.insert_manufacturer(c_manufacturer_id,'Walgreens','Pharmacy and Medical');
+    inventory_utils.insert_manufacturer(c_manufacturer_id,'PaperSauce','Stationary');
+    inventory_utils.insert_manufacturer(c_manufacturer_id,'Stationary Co','Stationary');
+    inventory_utils.insert_manufacturer(c_manufacturer_id,'Yale Applicances','various appliances available');
+    inventory_utils.insert_manufacturer(c_manufacturer_id,'AAA Applicances','various appliances available');
+    inventory_utils.insert_manufacturer(c_manufacturer_id,'Ulta','beauty products');
+    inventory_utils.insert_manufacturer(c_manufacturer_id,'Lakme','beauty brands');
     
     -- insert category records
-    inventory_utils.insert_category(c_category_id, 'Electronics','Contains all electronic categories'); --1
-    inventory_utils.insert_category(c_category_id, 'General Shopping','General shopping of all brands'); --2
-    inventory_utils.insert_category(c_category_id, 'Pharmacy', 'Medical and surgery stuff'); --3
-    inventory_utils.insert_category(c_category_id, 'Beauty', 'Beauty products'); --4
-    inventory_utils.insert_category(c_category_id, 'Apparels', 'Various apparels category'); --5
-    inventory_utils.insert_category(c_category_id, 'Telecom', 'Various telecom products'); --6
-    inventory_utils.insert_category(c_category_id, 'Laptop', 'Major laptop brands'); --7
-    inventory_utils.insert_category(c_category_id, 'Appliance', 'Appliance store'); --8
-    inventory_utils.insert_category(c_category_id, 'Stationary', 'School supplies'); --9
+    inventory_utils.insert_category(c_category_id, 'Electronics','Contains all electronic categories');
+    inventory_utils.insert_category(c_category_id, 'General Shopping','General shopping of all brands');
+    inventory_utils.insert_category(c_category_id, 'Pharmacy', 'Medical and surgery stuff');
+    inventory_utils.insert_category(c_category_id, 'Beauty', 'Beauty products');
+    inventory_utils.insert_category(c_category_id, 'Apparels', 'Various apparels category');
+    inventory_utils.insert_category(c_category_id, 'Telecom', 'Various telecom products');
+    inventory_utils.insert_category(c_category_id, 'Laptop', 'Major laptop brands');
+    inventory_utils.insert_category(c_category_id, 'Appliance', 'Appliance store');
+    inventory_utils.insert_category(c_category_id, 'Stationary', 'School supplies');
     
     -- insert products
     inventory_utils.insert_product(c_product_id, 'MacBook Pro 14 Inch 2021', 100, 1999, 7, 7, 1);
@@ -103,42 +103,42 @@ BEGIN
     inventory_utils.insert_product(c_product_id, 'HP Mouse Bluetooth', 100, 499, 1, 6, 1);
     inventory_utils.insert_product(c_product_id, 'Mosiso Hardcase - 14 Inch', 100, 25, 2, 8, 1);
     inventory_utils.insert_product(c_product_id, 'Mosiso Sleeve Bag', 100, 49, 2, 8, 1);
-    inventory_utils.insert_product(c_product_id, 'Night Lamp', 50, 30, 8, 1, 1);--1
-    inventory_utils.insert_product(c_product_id, 'Sofa', 60, 200, 8, 1, 1);--1
-    inventory_utils.insert_product(c_product_id, 'Bedcovers', 70, 40, 2, 2, 1);--2
-    inventory_utils.insert_product(c_product_id, 'Pillows', 10, 20, 2, 2, 1);--2
-    inventory_utils.insert_product(c_product_id, 'Rice', 90, 30, 2, 3, 1);--3
-    inventory_utils.insert_product(c_product_id, 'Milk', 11, 10, 2, 3, 1);--3
-    inventory_utils.insert_product(c_product_id, 'Power Bank', 12, 40, 6, 4, 1);--4
-    inventory_utils.insert_product(c_product_id, 'Switches', 12, 20, 6, 4, 1);--4
-    inventory_utils.insert_product(c_product_id, 'Laptop Cord',13,35,7,5,1);--5
-    inventory_utils.insert_product(c_product_id, 'Wireless Mouse',70,30,7,5,1);--5
-    inventory_utils.insert_product(c_product_id, 'Nike Jordans',10,90,5,10,1);--10
-    inventory_utils.insert_product(c_product_id, 'Headband',100,15,5,10,1);--10
-    inventory_utils.insert_product(c_product_id, 'Cropped Tshirt',100,40,5,11,1);--11
-    inventory_utils.insert_product(c_product_id, 'Leggings',100,23,5,11,1);--11
-    inventory_utils.insert_product(c_product_id, 'Refridgerator',50,500,1,12,1);--12
-    inventory_utils.insert_product(c_product_id, 'Air Conditioner',20,400,1,12,1);--12
-    inventory_utils.insert_product(c_product_id, 'Mixer',20,70,8,13,1);--13
-    inventory_utils.insert_product(c_product_id, 'Purifier',30,70,8,13,1);--13
-    inventory_utils.insert_product(c_product_id, 'Laptop',700,2000,7,14,1);--14
-    inventory_utils.insert_product(c_product_id, 'Hard disk',300,70,7,14,1);--14
-    inventory_utils.insert_product(c_product_id, 'Heay Patches',25,9,3,15,1);--15
-    inventory_utils.insert_product(c_product_id, 'Relief Spray',45,12,3,15,1);--15
-    inventory_utils.insert_product(c_product_id, 'Bandages',70,6,3,16,1);--16
-    inventory_utils.insert_product(c_product_id, 'Burn Ointment',30,9,3,16,1);--16
-    inventory_utils.insert_product(c_product_id, 'Eraser',60,2,9,17,1);--17
-    inventory_utils.insert_product(c_product_id, 'Coloured Pens',100,7,9,17,1);--17
-    inventory_utils.insert_product(c_product_id, 'Paper Cutter',70,10,9,18,1);--18
-    inventory_utils.insert_product(c_product_id, 'Glue',100,10,9,18,1);--18
-    inventory_utils.insert_product(c_product_id, 'Electric Bicycle',30,300,2,19,1);--19
-    inventory_utils.insert_product(c_product_id, 'Batteries',400,15,6,19,1);--19
-    inventory_utils.insert_product(c_product_id, 'Charging Cords',200,40,6,20,1);--20
-    inventory_utils.insert_product(c_product_id, 'Extension Board',50,20,6,20,1);--20
-    inventory_utils.insert_product(c_product_id, 'Beauty Blender',500,10,4,21,1);--21
-    inventory_utils.insert_product(c_product_id, 'Face Cream',600,20,4,21,1);--21
-    inventory_utils.insert_product(c_product_id, 'Foundation',800,50,4,22,1);--22
-    inventory_utils.insert_product(c_product_id, 'Concealer',600,35,4,22,1);--22
+    inventory_utils.insert_product(c_product_id, 'Night Lamp', 50, 30, 8, 1, 1);
+    inventory_utils.insert_product(c_product_id, 'Sofa', 60, 200, 8, 1, 1);
+    inventory_utils.insert_product(c_product_id, 'Bedcovers', 70, 40, 2, 2, 1);
+    inventory_utils.insert_product(c_product_id, 'Pillows', 10, 20, 2, 2, 1);
+    inventory_utils.insert_product(c_product_id, 'Rice', 90, 30, 2, 3, 1);
+    inventory_utils.insert_product(c_product_id, 'Milk', 11, 10, 2, 3, 1);
+    inventory_utils.insert_product(c_product_id, 'Power Bank', 12, 40, 6, 4, 1);
+    inventory_utils.insert_product(c_product_id, 'Switches', 12, 20, 6, 4, 1);
+    inventory_utils.insert_product(c_product_id, 'Laptop Cord',13,35,7,5,1);
+    inventory_utils.insert_product(c_product_id, 'Wireless Mouse',70,30,7,5,1);
+    inventory_utils.insert_product(c_product_id, 'Nike Jordans',10,90,5,10,1);
+    inventory_utils.insert_product(c_product_id, 'Headband',100,15,5,10,1);
+    inventory_utils.insert_product(c_product_id, 'Cropped Tshirt',100,40,5,11,1);
+    inventory_utils.insert_product(c_product_id, 'Leggings',100,23,5,11,1);
+    inventory_utils.insert_product(c_product_id, 'Refridgerator',50,500,1,12,1);
+    inventory_utils.insert_product(c_product_id, 'Air Conditioner',20,400,1,12,1);
+    inventory_utils.insert_product(c_product_id, 'Mixer',20,70,8,13,1);
+    inventory_utils.insert_product(c_product_id, 'Purifier',30,70,8,13,1);
+    inventory_utils.insert_product(c_product_id, 'Laptop',700,2000,7,14,1);
+    inventory_utils.insert_product(c_product_id, 'Hard disk',300,70,7,14,1);
+    inventory_utils.insert_product(c_product_id, 'Heay Patches',25,9,3,15,1);
+    inventory_utils.insert_product(c_product_id, 'Relief Spray',45,12,3,15,1);
+    inventory_utils.insert_product(c_product_id, 'Bandages',70,6,3,16,1);
+    inventory_utils.insert_product(c_product_id, 'Burn Ointment',30,9,3,16,1);
+    inventory_utils.insert_product(c_product_id, 'Eraser',60,2,9,17,1);
+    inventory_utils.insert_product(c_product_id, 'Coloured Pens',100,7,9,17,1);
+    inventory_utils.insert_product(c_product_id, 'Paper Cutter',70,10,9,18,1);
+    inventory_utils.insert_product(c_product_id, 'Glue',100,10,9,18,1);
+    inventory_utils.insert_product(c_product_id, 'Electric Bicycle',30,300,2,19,1);
+    inventory_utils.insert_product(c_product_id, 'Batteries',400,15,6,19,1);
+    inventory_utils.insert_product(c_product_id, 'Charging Cords',200,40,6,20,1);
+    inventory_utils.insert_product(c_product_id, 'Extension Board',50,20,6,20,1);
+    inventory_utils.insert_product(c_product_id, 'Beauty Blender',500,10,4,21,1);
+    inventory_utils.insert_product(c_product_id, 'Face Cream',600,20,4,21,1);
+    inventory_utils.insert_product(c_product_id, 'Foundation',800,50,4,22,1);
+    inventory_utils.insert_product(c_product_id, 'Concealer',600,35,4,22,1);
 END;
 /
 
@@ -146,11 +146,8 @@ DECLARE
     c_order_id NUMBER;
 BEGIN
     -- order flow 1
-    
-    -- customer id, address id, shipping type, order id OUT
     inventory_utils.create_order(1, 1, 'Standard', c_order_id);
     
-    -- order id, qty, prod id
     inventory_utils.create_order_items(c_order_id, 2, 1);
     inventory_utils.create_order_items(c_order_id, 1, 2);
     inventory_utils.create_order_items(c_order_id, 3, 3);
@@ -402,13 +399,11 @@ BEGIN
     inventory_utils.insert_reviews(3, 'Good in the initial days and then degraded', 1);
     inventory_utils.insert_reviews(4, 'not fitting properly', 3);
     inventory_utils.insert_reviews(5, 'best product I have ever purchased', 5);
-    /*
     inventory_utils.insert_reviews(6, 'quality is bad', 2);
     inventory_utils.insert_reviews(7, 'good for the price', 3);
     inventory_utils.insert_reviews(8, 'dont buy this crap', 1);
     inventory_utils.insert_reviews(9, 'rough and tough', 4);
     inventory_utils.insert_reviews(10, 'highly durable', 5);
-    */
     inventory_utils.insert_reviews(11, 'product recommended', 4);
     inventory_utils.insert_reviews(12, 'best of best', 5);
     inventory_utils.insert_reviews(13, 'quality has been degraded over years', 2);
