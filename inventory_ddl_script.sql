@@ -164,7 +164,7 @@ CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
                 'CREATE SEQUENCE transaction_seq START WITH 1';
 
                 EXECUTE IMMEDIATE
-                'CREATE INDEX transaction_order_id_I ON TRANSACTION (order_id);';
+                'CREATE INDEX transaction_order_id_I ON TRANSACTION (order_id)';
                 
             ELSIF c_upper_table_name = 'ORDER_TRACKING' THEN
                 EXECUTE IMMEDIATE
@@ -186,7 +186,7 @@ CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
                 'CREATE INDEX order_tracking_tracking_number_I ON ORDER_TRACKING (tracking_number)';
                 
                 EXECUTE IMMEDIATE
-                'CREATE INDEX order_tracking_order_id_I ON ORDER_TRACKING (order_id);';
+                'CREATE INDEX order_tracking_order_id_I ON ORDER_TRACKING (order_id)';
 
             ELSIF c_upper_table_name = 'REVIEWS' THEN
                 EXECUTE IMMEDIATE
@@ -203,7 +203,7 @@ CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
                 'CREATE SEQUENCE reviews_seq START WITH 1';
 
                 EXECUTE IMMEDIATE
-                'CREATE INDEX reviews_order_item_id_I ON REVIEWS (order_item_id);';
+                'CREATE INDEX reviews_order_item_id_I ON REVIEWS (order_item_id)';
                 
             ELSE 
                 RAISE ex_table_not_found;
