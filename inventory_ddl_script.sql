@@ -443,6 +443,12 @@ CREATE OR REPLACE PACKAGE inventory_utils AS
 
     -- get product recommendations
     FUNCTION get_products_rec(c_product_id NUMBER) RETURN product_rec;
+    
+    -- check if customer is active or not
+    FUNCTION is_customer_active(c_customer_id customer.customer_id%TYPE) RETURN NUMBER;
+    
+    -- check if a product is active or not
+    FUNCTION is_product_active(c_product_id order_items.product_id%TYPE) RETURN NUMBER;
 
     -- create an Order 
     PROCEDURE create_order(
@@ -593,7 +599,7 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         is_customer_id_valid NUMBER;
         fetch_customer_id NUMBER;
         CURSOR customer_rec IS 
-        SELECT customer_id FROM customer WHERE customer_id = c_customer_id and is_active = 1;
+        SELECT customer_id FROM customer WHERE customer_id = c_customer_id;
     BEGIN 
         OPEN customer_rec;
         FETCH customer_rec INTO fetch_customer_id;
@@ -671,7 +677,7 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         is_product_id_valid NUMBER;
     BEGIN
         BEGIN
-            SELECT product_id INTO is_product_id_valid FROM product WHERE product_id = c_product_id and is_active = 1;
+            SELECT product_id INTO is_product_id_valid FROM product WHERE product_id = c_product_id;
     
         EXCEPTION
             WHEN NO_DATA_FOUND THEN
@@ -688,7 +694,7 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         c_product_qty NUMBER;
     BEGIN
         BEGIN
-            SELECT quantity INTO c_product_qty FROM product WHERE product_id = c_product_id and is_active = 1;
+            SELECT quantity INTO c_product_qty FROM product WHERE product_id = c_product_id;
     
         EXCEPTION
             WHEN NO_DATA_FOUND THEN
@@ -704,7 +710,7 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
     IS 
         c_product_price NUMBER;
     BEGIN
-        SELECT price INTO c_product_price FROM product WHERE product_id = c_product_id and is_active = 1;
+        SELECT price INTO c_product_price FROM product WHERE product_id = c_product_id;
 
         RETURN c_product_price; 
     
@@ -741,7 +747,31 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         WHERE c.category_id = (SELECT DISTINCT category_id FROM product WHERE product_id = c_product_id);
         RETURN return_value;
     END get_products_rec;
+    
+    -- check if customer is active or not
+    FUNCTION is_customer_active(c_customer_id customer.customer_id%TYPE) 
+    RETURN NUMBER
+    IS 
+        c_is_customer_active NUMBER;
+    BEGIN
+        SELECT is_active INTO c_is_customer_active FROM customer WHERE customer_id = c_customer_id;
 
+        RETURN c_is_customer_active; 
+    
+    END is_customer_active;
+    
+    -- check if a product is active or not
+    FUNCTION is_product_active(c_product_id order_items.product_id%TYPE) 
+    RETURN NUMBER
+    IS 
+        c_is_product_active NUMBER;
+    BEGIN
+        SELECT is_active INTO c_is_product_active FROM product WHERE product_id = c_product_id;
+
+        RETURN c_is_product_active; 
+    
+    END is_product_active;
+    
     -- create an order 
     PROCEDURE create_order(
         c_customer_id customer.customer_id%TYPE,
@@ -758,6 +788,7 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         ex_address_id_empty EXCEPTION;
         ex_shipping_type_empty EXCEPTION;
         ex_address_not_corresponds_to_customer EXCEPTION;
+        ex_customer_not_active EXCEPTION;
         c_shipping_charges NUMBER;
         p_customer_id NUMBER;
     BEGIN
@@ -779,7 +810,7 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
             RAISE ex_shipping_type_not_valid;
         END IF;
         
-        IF validate_customer_id(c_customer_id) = 1 and validate_address_id(c_address_id) = 1 THEN
+        IF validate_customer_id(c_customer_id) = 1 and validate_address_id(c_address_id) = 1 and is_customer_active(c_customer_id) = 1 THEN
         
             SELECT customer_id INTO p_customer_id FROM address WHERE address_id = c_address_id;
             IF p_customer_id = c_customer_id THEN
@@ -793,6 +824,8 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
             RAISE ex_customer_not_found;
         ELSIF validate_customer_id(c_customer_id) = 0 THEN
             RAISE ex_address_not_found;
+        ELSIF is_customer_active(c_customer_id) = 0 THEN
+            RAISE ex_customer_not_active;
         END IF;
         
     EXCEPTION
@@ -810,7 +843,8 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
             DBMS_OUTPUT.PUT_LINE('Shipping type can not be null or empty');
         WHEN ex_address_not_corresponds_to_customer THEN
             DBMS_OUTPUT.PUT_LINE('Adress Id provided doesnt belong to the customer id passed while creating order');
-            
+        WHEN ex_customer_not_active THEN
+            DBMS_OUTPUT.PUT_LINE('Customer is inactive');     
     END create_order;
 
     -- create order items
@@ -831,6 +865,7 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         ex_ordered_qty_exceeds EXCEPTION;
         ex_product_id_empty EXCEPTION;
         ex_transaction_already_present EXCEPTION;
+        ex_product_id_not_active EXCEPTION;
         c_transaction_count NUMBER;
     BEGIN
         
@@ -854,6 +889,8 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
             RAISE ex_order_id_not_found;
         ELSIF validate_product_id(c_product_id) = 0 THEN
             RAISE ex_product_id_not_found;
+        ELSIF is_product_active(c_product_id) = 0 THEN
+            RAISE ex_product_id_not_active;
         ELSIF validate_product_qty(c_product_id) = 0 THEN
             RAISE ex_product_qty_zero;
         ELSIF c_quantity > validate_product_qty(c_product_id) THEN
@@ -898,7 +935,9 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
             DBMS_OUTPUT.PUT_LINE('The quantity of the product ordered is greater than the current quantity of product');
             ROLLBACK TO revert_created_order;
         WHEN ex_transaction_already_present THEN
-            DBMS_OUTPUT.PUT_LINE('Order item can not be added as trnsaction for this order has already been done. Please create a new order');
+            DBMS_OUTPUT.PUT_LINE('Order item can not be added as transaction for this order has already been done. Please create a new order');
+        WHEN ex_product_id_not_active THEN
+            DBMS_OUTPUT.PUT_LINE('Product id is not active');         
         
     END create_order_items;
 
@@ -994,6 +1033,8 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         ex_order_id_empty EXCEPTION;
         ex_status_empty EXCEPTION;
         ex_status_invalid EXCEPTION;
+        ex_shipping_status_change_exception EXCEPTION;
+        c_delivery_status VARCHAR2(50);
     BEGIN
         
         IF (TRIM(c_order_id) = '' or c_order_id is null) THEN
@@ -1006,8 +1047,20 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
             RAISE ex_order_id_not_found;
         END IF;
         
-        IF c_status != 'SHIPPED' and c_status != 'OUT FOR DELIVERY' and c_status != 'IN TRANSIT' and c_status != 'DELIVERED' and c_status != 'CANCELLED' THEN
+        IF c_status != 'SHIPPED' and c_status != 'IN TRANSIT' and c_status != 'OUT FOR DELIVERY' and c_status != 'DELIVERED' and c_status != 'CANCELLED' THEN
             RAISE ex_status_invalid;
+        END IF;
+        
+        SELECT delivery_status INTO c_delivery_status FROM order_tracking WHERE order_id = c_order_id;
+        
+        IF c_delivery_status = 'IN TRANSIT' and c_status = 'SHIPPED' THEN
+            RAISE ex_shipping_status_change_exception;
+        ELSIF c_delivery_status = 'OUT FOR DELIVERY' and (c_status = 'SHIPPED' or c_status = 'IN TRANSIT')  THEN
+            RAISE ex_shipping_status_change_exception;
+        ELSIF c_delivery_status = 'DELIVERED' and (c_status = 'SHIPPED' or c_status = 'OUT FOR DELIVERY' or c_status = 'IN TRANSIT')  THEN
+            RAISE ex_shipping_status_change_exception;
+        ELSIF c_delivery_status = 'CANCELLED' and (c_status = 'SHIPPED' or c_status = 'OUT FOR DELIVERY' or c_status = 'IN TRANSIT' or c_status = 'DELIVERED')  THEN
+            RAISE ex_shipping_status_change_exception;
         END IF;
         
         UPDATE order_tracking SET delivery_status = c_status WHERE order_id = c_order_id;
@@ -1025,6 +1078,8 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
             DBMS_OUTPUT.PUT_LINE('Status can not be empty');
         WHEN ex_status_invalid THEN
             DBMS_OUTPUT.PUT_LINE('Provided status in invalid. Valid values are SHIPPED, IN TRANSIT, OUT FOR DELIVERY, DELIVERED, CANCELLED');
+        WHEN ex_shipping_status_change_exception THEN
+            DBMS_OUTPUT.PUT_LINE('Shipping status can not be changed from ' || c_delivery_status || ' to ' || c_status);
             
     END update_order_tracking_status;
 
@@ -1040,6 +1095,7 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         ex_value_empty EXCEPTION;
         ex_product_id_not_found EXCEPTION;
         ex_invalid_value EXCEPTION;
+        ex_product_id_not_active EXCEPTION;
     BEGIN
         
         IF (TRIM(c_product_id) = '' or c_product_id is null) THEN
@@ -1052,6 +1108,8 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         
         IF validate_product_id(c_product_id) = 0 THEN
             RAISE ex_product_id_not_found;
+        ELSIF is_product_active(c_product_id) = 0 THEN
+            RAISE ex_product_id_not_active;
         END IF;
         
         IF c_type != 'Quantity' and c_type != 'Price' and c_type != 'Name' THEN
@@ -1077,6 +1135,8 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
             DBMS_OUTPUT.PUT_LINE('Product Id can not be found');
         WHEN ex_invalid_value THEN
             DBMS_OUTPUT.PUT_LINE('Provided value in invalid. Valid values are Quantity, Price, Name');
+        WHEN ex_product_id_not_active THEN
+            DBMS_OUTPUT.PUT_LINE('Product id is inactive');
             
     END update_product;
     
@@ -1476,7 +1536,7 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         WHEN ex_invalid_rating_value THEN
             DBMS_OUTPUT.PUT_LINE('Rating number is invalid. It should be from 1 to 5');
         WHEN ex_order_not_delivered THEN
-            DBMS_OUTPUT.PUT_LINE('Review can not be given as the item is not delivered yet');
+            DBMS_OUTPUT.PUT_LINE('Review can not be given as the item is not delivered yet or it has been cancelled');
             
     END insert_reviews;
     
@@ -1580,11 +1640,11 @@ ORDER BY COUNT(o.delivery_partner_id) DESC;
 
 -- Top manufacturer average ratings and total number of orders placed
 CREATE OR REPLACE VIEW manufacturer_ratings AS
-SELECT m.manufacturer_id, m.manufacturer_name, AVG(r.rating) AS "AVG RATINGS", COUNT(oi.order_item_id) AS "NO OF ORDERS PLACED",
+SELECT m.manufacturer_id, m.manufacturer_name, ROUND(AVG(r.rating), 2) AS "AVG RATING", COUNT(oi.order_item_id) AS "NO OF ORDERS PLACED",
 CASE
-    WHEN AVG(r.rating) >= 1 AND AVG(r.rating)  <=2.5 
+    WHEN ROUND(AVG(r.rating), 2) >= 1 AND ROUND(AVG(r.rating), 2)  <=2.5 
         THEN 'LOW'
-    WHEN AVG(r.rating) >2.5 AND AVG(r.rating) <= 4
+    WHEN ROUND(AVG(r.rating), 2) >2.5 AND ROUND(AVG(r.rating), 2) <= 4
         THEN 'MEDIUM'
     ELSE 
         'HIGH'
@@ -1592,4 +1652,4 @@ END CATEGORY
 FROM reviews r ,order_items oi, product p, manufacturer m 
 WHERE r.order_item_id = oi.order_item_id and oi.product_id = p.product_id 
 AND p.manufacturer_id = m.manufacturer_id 
-GROUP BY m.manufacturer_id, m.manufacturer_name, m.manufacturer_id ORDER BY AVG(r.rating) DESC;
+GROUP BY m.manufacturer_id, m.manufacturer_name, m.manufacturer_id ORDER BY ROUND(AVG(r.rating), 2) DESC;
