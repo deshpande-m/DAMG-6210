@@ -455,7 +455,8 @@ CREATE OR REPLACE PACKAGE inventory_utils AS
         c_customer_id customer.customer_id%TYPE,
         c_address_id address.address_id%TYPE,
         c_shipping_type orders.shipping_type%TYPE,
-        c_order_id OUT orders.order_id%TYPE
+        c_order_id OUT orders.order_id%TYPE,
+        c_order_date orders.order_date%TYPE
     );
 
     -- create order items
@@ -777,7 +778,8 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         c_customer_id customer.customer_id%TYPE,
         c_address_id address.address_id%TYPE,
         c_shipping_type orders.shipping_type%TYPE,
-        c_order_id OUT orders.order_id%TYPE
+        c_order_id OUT orders.order_id%TYPE,
+        c_order_date orders.order_date%TYPE
     ) 
     AS
         ex_customer_not_found EXCEPTION;
@@ -815,8 +817,13 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
             SELECT customer_id INTO p_customer_id FROM address WHERE address_id = c_address_id;
             IF p_customer_id = c_customer_id THEN
                 c_order_id := orders_seq.NEXTVAL;
-                INSERT INTO orders (order_id, order_date, shipping_type, customer_id, shipping_charges, address_id)
-                VALUES (c_order_id, SYSTIMESTAMP,c_shipping_type, c_customer_id, c_shipping_charges, c_address_id);
+                IF (c_order_date = '' or c_order_date is null) THEN
+                    INSERT INTO orders (order_id, order_date, shipping_type, customer_id, shipping_charges, address_id)
+                    VALUES (c_order_id, SYSTIMESTAMP,c_shipping_type, c_customer_id, c_shipping_charges, c_address_id);
+                ELSE
+                    INSERT INTO orders (order_id, order_date, shipping_type, customer_id, shipping_charges, address_id)
+                    VALUES (c_order_id, c_order_date,c_shipping_type, c_customer_id, c_shipping_charges, c_address_id);
+                END IF;
             ELSE
                 RAISE ex_address_not_corresponds_to_customer;
             END IF;
