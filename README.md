@@ -19,7 +19,7 @@ E-commerce represents an advancement in this fast-growing world. Online purchase
 5. Find for recommendations and data analysis.
 
 ## ER Diagram
-![Untitled (2)](https://user-images.githubusercontent.com/65121120/145920715-b0415980-fb15-4d1d-a840-5823d0786c4b.png)
+![Untitled (3)](https://user-images.githubusercontent.com/65121120/146040168-ef54c3d8-10b6-4dec-ad8d-008196052579.png)
 
 ## Technology Stack
 Oracle PL/SQL

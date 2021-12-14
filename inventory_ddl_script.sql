@@ -164,7 +164,7 @@ CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
                 'CREATE SEQUENCE transaction_seq START WITH 1';
 
                 EXECUTE IMMEDIATE
-                'CREATE INDEX transaction_order_id_I ON TRANSACTION (order_id);';
+                'CREATE INDEX transaction_order_id_I ON TRANSACTION (order_id)';
                 
             ELSIF c_upper_table_name = 'ORDER_TRACKING' THEN
                 EXECUTE IMMEDIATE
@@ -186,7 +186,7 @@ CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
                 'CREATE INDEX order_tracking_tracking_number_I ON ORDER_TRACKING (tracking_number)';
                 
                 EXECUTE IMMEDIATE
-                'CREATE INDEX order_tracking_order_id_I ON ORDER_TRACKING (order_id);';
+                'CREATE INDEX order_tracking_order_id_I ON ORDER_TRACKING (order_id)';
 
             ELSIF c_upper_table_name = 'REVIEWS' THEN
                 EXECUTE IMMEDIATE
@@ -203,7 +203,7 @@ CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
                 'CREATE SEQUENCE reviews_seq START WITH 1';
 
                 EXECUTE IMMEDIATE
-                'CREATE INDEX reviews_order_item_id_I ON REVIEWS (order_item_id);';
+                'CREATE INDEX reviews_order_item_id_I ON REVIEWS (order_item_id)';
                 
             ELSE 
                 RAISE ex_table_not_found;
@@ -1269,8 +1269,10 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         END IF;
         
         c_customer_id := customer_seq.NEXTVAL;
+        LOCK TABLE CUSTOMER IN EXCLUSIVE MODE; 
         INSERT INTO CUSTOMER (customer_id, first_name,last_name,date_of_birth,email,is_active)
         VALUES (c_customer_id,p_first_name,p_last_name ,p_date_of_birth,p_email,p_is_active);   
+        COMMIT;
     
     EXCEPTION
         WHEN ex_first_name_not_found THEN
@@ -1325,9 +1327,10 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         END if; 
         
         p_address_id := address_seq.NEXTVAL;
+        LOCK TABLE address IN EXCLUSIVE MODE;
         INSERT INTO address (address_id,customer_id,address_1, address_2,city,state,zip,country)
         VALUES (p_address_id,p_customer_id,p_address_1, p_address_2,p_city,p_state,p_zip,p_country);        
-    
+        COMMIT;
     
     EXCEPTION
             
@@ -1370,8 +1373,10 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         END IF;    
         
         p_category_id := category_seq.NEXTVAL;
+        LOCK TABLE Category IN EXCLUSIVE MODE; 
         INSERT INTO Category(category_id,category_name,category_desc)
-        VALUES (p_category_id,p_category_name,p_category_desc);  
+        VALUES (p_category_id,p_category_name,p_category_desc); 
+        COMMIT; 
     
     EXCEPTION
         WHEN ex_category_name_not_found THEN
@@ -1398,8 +1403,10 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         END IF;
         
         p_MANUFACTURER_id := manufacturer_seq.NEXTVAL;
+        LOCK TABLE MANUFACTURER IN EXCLUSIVE MODE;
         INSERT INTO MANUFACTURER (MANUFACTURER_id,MANUFACTURER_name,MANUFACTURER_desc)
         VALUES (p_MANUFACTURER_id,p_MANUFACTURER_name,p_MANUFACTURER_desc);
+        COMMIT;
 
     EXCEPTION
         WHEN ex_MANUFACTURER_name_not_found THEN
@@ -1441,9 +1448,11 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         END IF;
        
         p_product_id := product_seq.NEXTVAL;
+        LOCK TABLE product IN EXCLUSIVE MODE;
         INSERT INTO product (product_id, product_name, quantity , price ,category_id,manufacturer_id , is_active )
         VALUES (p_product_id, p_name, p_quantity , p_price ,p_category_id ,p_manufacturer_id ,p_is_active );
-    
+        COMMIT;
+
     EXCEPTION
         WHEN ex_product_name_not_found THEN
             DBMS_OUTPUT.PUT_LINE('PRODUCT NAME ENTERED ID INVALID');
@@ -1474,9 +1483,11 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         END IF;
         
         P_delivery_partner_id := delivery_partner_seq.NEXTVAL;
+        LOCK TABLE DELIVERY_PARTNER IN EXCLUSIVE MODE;
         INSERT INTO DELIVERY_PARTNER (DELIVERY_PARTNER_ID, DELIVERY_PARTNER_NAME)
         VALUES (P_delivery_partner_id, P_delivery_partner_name );  
-    
+        COMMIT;
+        
     EXCEPTION 
         WHEN ex_delivery_partner_name_not_found THEN
             DBMS_OUTPUT.PUT_LINE('Delivery partner NAME ENTERED ID INVALID');
