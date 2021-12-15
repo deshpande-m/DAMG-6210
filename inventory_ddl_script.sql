@@ -1729,3 +1729,12 @@ FROM reviews r ,order_items oi, product p, manufacturer m
 WHERE r.order_item_id = oi.order_item_id and oi.product_id = p.product_id 
 AND p.manufacturer_id = m.manufacturer_id 
 GROUP BY m.manufacturer_id, m.manufacturer_name, m.manufacturer_id ORDER BY ROUND(AVG(r.rating), 2) DESC;
+
+-- to view the details of the orders placed
+CREATE OR REPLACE VIEW inventory_order_details AS
+SELECT o.order_id, COUNT(oi.order_item_id) AS "NO OF ORDERED ITEMS", ot.delivery_status, ot.tracking_number, t.total_amount, dp.delivery_partner_name, 
+o.shipping_type, o.order_date
+FROM orders o, order_items oi, transaction t, order_tracking ot, delivery_partner dp
+WHERE o.order_id = oi.order_id AND o.order_id = t.order_id AND o.order_id = ot.order_id AND ot.delivery_partner_id = dp.delivery_partner_id
+GROUP BY o.order_id, ot.delivery_status, ot.tracking_number, t.total_amount, dp.delivery_partner_name, o.shipping_type, o.order_date
+ORDER BY o.order_date DESC;
