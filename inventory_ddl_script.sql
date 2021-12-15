@@ -741,12 +741,22 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
     AS
         return_value product_rec;
     BEGIN
+        with cte as (
+        select o.order_id from orders o
+        where customer_id = c_product_id
+        order by o.order_date desc
+        fetch first row only
+        ),cte2 as(
+        select product_id from order_items oi
+        where order_id = (select * from cte)
+        order by oi.quantity desc
+        fetch first row only)
         SELECT product_obj(product_id, product_name, category_name)
         bulk collect INTO return_value      
         FROM product p
         INNER JOIN category c
         ON p.category_id = c.category_id
-        WHERE c.category_id = (SELECT DISTINCT category_id FROM product WHERE product_id = c_product_id);
+        WHERE c.category_id = (SELECT DISTINCT category_id FROM product WHERE product_id = (select * from cte2));
         RETURN return_value;
     END get_products_rec;
     
@@ -1633,14 +1643,16 @@ WHERE a. rn <= 3;
 
 -- View to get top 3 categories of product sold by quantity
 CREATE or REPLACE VIEW Top_Categories AS
-SELECT a.category_name, a.product_name, a.prodcount FROM
-(SELECT c.category_name, p.product_name, sum(o.quantity) AS prodcount,
+SELECT a.category_name, a.prodcount FROM
+(SELECT c.category_name, sum(o.quantity) AS prodcount,
 RANK() OVER (PARTITION BY c.category_name ORDER BY SUM(o.quantity) DESC) AS rn FROM Category c 
 LEFT JOIN product p
 on c.category_id = p.category_id
 JOIN order_items o on o.product_id = p.product_id
-GROUP BY c.category_name, p.product_name) a
-WHERE rn in (1,2,3);
+GROUP BY c.category_name) a
+WHERE rn in (1,2,3)
+order by a.prodcount desc
+fetch first 3 rows only;
 
 --View to get inventory status and manufacture report to view products low on stock, quantity less than equal 20
 CREATE OR REPLACE VIEW Inventory_status AS
