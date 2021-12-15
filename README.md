@@ -1,4 +1,4 @@
-# <p align="center"> Inventory Management System </p>
+# <p align="center"> Conglomerate Product Supply Control System </p>
 
 | Name | NU ID |
 | --- | --- |

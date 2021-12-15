@@ -18,3 +18,6 @@ Select * from manufacturer_ratings;
 
 -- GET PRODUCT RECOMMENDATIONS
 select * from table (inventory_utils.get_products_rec(10));
+
+-- get order details across inventory
+SELECT * FROM inventory_order_details;

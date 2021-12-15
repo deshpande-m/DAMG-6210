@@ -6,6 +6,11 @@ CREATE OR REPLACE PACKAGE create_delete_utils AS
         c_table_name VARCHAR2
     );
 
+    -- create sequence
+    PROCEDURE create_sequence(
+        c_sequence_name VARCHAR2
+    );
+
     -- delete table records
     PROCEDURE delete_records;
 
@@ -20,6 +25,73 @@ END create_delete_utils;
 -- package body for creating tables and deleting records from the table
 CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
     
+    -- create sequence
+    PROCEDURE create_sequence(
+        c_sequence_name VARCHAR2
+    )
+    AS
+        ex_sequence_not_found EXCEPTION;
+        c_sequence_count NUMBER;
+        c_upper_sequence_name VARCHAR(100);
+    BEGIN
+        c_upper_sequence_name := UPPER(c_sequence_name);
+        SELECT count(*) INTO c_sequence_count FROM user_sequences where sequence_name = c_upper_sequence_name;
+
+        IF c_sequence_count = 0 THEN
+            IF c_upper_sequence_name = 'CUSTOMER_SEQ' THEN
+                EXECUTE IMMEDIATE
+                'CREATE SEQUENCE CUSTOMER_SEQ START WITH 1';
+
+            ELSIF c_upper_sequence_name = 'ADDRESS_SEQ' THEN
+                EXECUTE IMMEDIATE
+                'CREATE SEQUENCE ADDRESS_SEQ START WITH 1';
+
+            ELSIF c_upper_sequence_name = 'CATEGORY_SEQ' THEN
+                EXECUTE IMMEDIATE
+                'CREATE SEQUENCE CATEGORY_SEQ START WITH 1';
+
+            ELSIF c_upper_sequence_name = 'DELIVERY_PARTNER_SEQ' THEN
+                EXECUTE IMMEDIATE
+                'CREATE SEQUENCE DELIVERY_PARTNER_SEQ START WITH 1';
+
+            ELSIF c_upper_sequence_name = 'MANUFACTURER_SEQ' THEN
+                EXECUTE IMMEDIATE
+                'CREATE SEQUENCE MANUFACTURER_SEQ START WITH 1';
+
+            ELSIF c_upper_sequence_name = 'ORDER_ITEM_SEQ' THEN
+                EXECUTE IMMEDIATE
+                'CREATE SEQUENCE ORDER_ITEM_SEQ START WITH 1';
+
+            ELSIF c_upper_sequence_name = 'ORDER_TRACKING_SEQ' THEN
+                EXECUTE IMMEDIATE
+                'CREATE SEQUENCE ORDER_TRACKING_SEQ START WITH 1';
+
+            ELSIF c_upper_sequence_name = 'ORDERS_SEQ' THEN
+                EXECUTE IMMEDIATE
+                'CREATE SEQUENCE ORDERS_SEQ START WITH 1';
+
+            ELSIF c_upper_sequence_name = 'PRODUCT_SEQ' THEN
+                EXECUTE IMMEDIATE
+                'CREATE SEQUENCE PRODUCT_SEQ START WITH 1';
+
+            ELSIF c_upper_sequence_name = 'REVIEWS_SEQ' THEN
+                EXECUTE IMMEDIATE
+                'CREATE SEQUENCE REVIEWS_SEQ START WITH 1';
+
+            ELSIF c_upper_sequence_name = 'TRANSACTION_SEQ' THEN
+                EXECUTE IMMEDIATE
+                'CREATE SEQUENCE TRANSACTION_SEQ START WITH 1';
+            ELSE 
+                RAISE ex_sequence_not_found;
+            END IF;
+        END IF;
+
+    EXCEPTION
+        WHEN ex_sequence_not_found THEN
+            DBMS_OUTPUT.PUT_LINE('Sequence name is invalid');
+
+    END create_sequence;
+
     -- create tables
     PROCEDURE create_table(
         c_table_name VARCHAR2
@@ -30,7 +102,7 @@ CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
         c_count NUMBER;
         c_upper_table_name VARCHAR(100);
     BEGIN
-        
+
         c_user_id := USER;
         c_upper_table_name := UPPER(c_table_name);
         SELECT count(1) INTO c_count FROM dba_tables where table_name = c_upper_table_name and OWNER = c_user_id;
@@ -46,9 +118,6 @@ CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
                     email VARCHAR2(50),
                     is_active NUMBER 
                 )';
-
-                EXECUTE IMMEDIATE
-                'CREATE SEQUENCE customer_seq START WITH 1';
                 
             ELSIF c_upper_table_name = 'ADDRESS' THEN
                 EXECUTE IMMEDIATE
@@ -63,9 +132,6 @@ CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
                     zip NUMBER,
                     country VARCHAR2(50)
                 )';
-
-                EXECUTE IMMEDIATE
-                'CREATE SEQUENCE address_seq START WITH 1';
                 
             ELSIF c_upper_table_name = 'CATEGORY' THEN
                 EXECUTE IMMEDIATE
@@ -74,9 +140,6 @@ CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
                     category_name VARCHAR2(50),
                     category_desc VARCHAR2(100)
                 )';
-
-                EXECUTE IMMEDIATE
-                'CREATE SEQUENCE category_seq START WITH 1';
                 
             ELSIF c_upper_table_name = 'MANUFACTURER' THEN
                 EXECUTE IMMEDIATE
@@ -85,9 +148,6 @@ CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
                     manufacturer_name VARCHAR2(50),
                     manufacturer_desc VARCHAR2(100)
                 )';
-
-                EXECUTE IMMEDIATE
-                'CREATE SEQUENCE manufacturer_seq START WITH 1';
                 
             ELSIF c_upper_table_name = 'PRODUCT' THEN
                 EXECUTE IMMEDIATE
@@ -102,9 +162,6 @@ CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
                     CONSTRAINT fkey_product_manufacturer_id FOREIGN KEY(manufacturer_id) REFERENCES manufacturer(manufacturer_id) ON DELETE CASCADE,
                     is_active NUMBER
                 )';
-
-                EXECUTE IMMEDIATE
-                'CREATE SEQUENCE product_seq START WITH 1';
                 
             ELSIF c_upper_table_name = 'DELIVERY_PARTNER' THEN
                 EXECUTE IMMEDIATE
@@ -112,9 +169,6 @@ CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
                     delivery_partner_id NUMBER PRIMARY KEY,
                     delivery_partner_name VARCHAR2(50)
                 )';
-
-                EXECUTE IMMEDIATE
-                'CREATE SEQUENCE delivery_partner_seq START WITH 1';
                 
             ELSIF c_upper_table_name = 'ORDERS' THEN
                 EXECUTE IMMEDIATE
@@ -131,9 +185,6 @@ CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
                     CONSTRAINT fkey_order_customer_id FOREIGN KEY(customer_id) REFERENCES customer(customer_id) ON DELETE CASCADE,
                     CONSTRAINT fkey_order_address_id FOREIGN KEY(address_id) REFERENCES address(address_id) ON DELETE CASCADE
                 )';
-
-                EXECUTE IMMEDIATE
-                'CREATE SEQUENCE orders_seq START WITH 1';
                 
             ELSIF c_upper_table_name = 'ORDER_ITEMS' THEN
                 EXECUTE IMMEDIATE
@@ -145,9 +196,6 @@ CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
                     CONSTRAINT fkey_order_items_order_id FOREIGN KEY(order_id) REFERENCES orders(order_id),
                     CONSTRAINT fkey_order_items_product_id FOREIGN KEY(product_id) REFERENCES product(product_id)
                 )';
-                
-                EXECUTE IMMEDIATE
-                'CREATE SEQUENCE order_item_seq START WITH 1';
 
             ELSIF c_upper_table_name = 'TRANSACTION' THEN
                 EXECUTE IMMEDIATE
@@ -159,9 +207,6 @@ CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
                     payment_method VARCHAR2(50),
                     CONSTRAINT fkey_transaction_order_id FOREIGN KEY(order_id) REFERENCES orders(order_id) ON DELETE CASCADE
                 )';
-
-                EXECUTE IMMEDIATE
-                'CREATE SEQUENCE transaction_seq START WITH 1';
 
                 EXECUTE IMMEDIATE
                 'CREATE INDEX transaction_order_id_I ON TRANSACTION (order_id)';
@@ -178,9 +223,6 @@ CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
                     CONSTRAINT fkey_order_tracking_delivery_partner_id FOREIGN KEY(delivery_partner_id) REFERENCES delivery_partner(delivery_partner_id) ON DELETE CASCADE,
                     CONSTRAINT fkey_order_tracking_order_id FOREIGN KEY(order_id) REFERENCES orders(order_id) ON DELETE CASCADE
                 )';
-
-                EXECUTE IMMEDIATE
-                'CREATE SEQUENCE order_tracking_seq START WITH 1';
                 
                 EXECUTE IMMEDIATE
                 'CREATE INDEX order_tracking_tracking_number_I ON ORDER_TRACKING (tracking_number)';
@@ -198,9 +240,6 @@ CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
                     rating NUMBER,
                     CONSTRAINT fkey_reviews_order_item_id FOREIGN KEY(order_item_id) REFERENCES order_items(order_item_id) ON DELETE CASCADE
                 )';
-                
-                EXECUTE IMMEDIATE
-                'CREATE SEQUENCE reviews_seq START WITH 1';
 
                 EXECUTE IMMEDIATE
                 'CREATE INDEX reviews_order_item_id_I ON REVIEWS (order_item_id)';
@@ -395,6 +434,17 @@ END create_delete_utils;
 
 -- script to create tables if doesnt exist
 BEGIN
+    create_delete_utils.create_sequence('CUSTOMER_SEQ');
+    create_delete_utils.create_sequence('ADDRESS_SEQ');
+    create_delete_utils.create_sequence('CATEGORY_SEQ');
+    create_delete_utils.create_sequence('MANUFACTURER_SEQ');
+    create_delete_utils.create_sequence('PRODUCT_SEQ');
+    create_delete_utils.create_sequence('DELIVERY_PARTNER_SEQ');
+    create_delete_utils.create_sequence('ORDERS_SEQ');
+    create_delete_utils.create_sequence('ORDER_ITEM_SEQ');
+    create_delete_utils.create_sequence('TRANSACTION_SEQ');
+    create_delete_utils.create_sequence('ORDER_TRACKING_SEQ');
+    create_delete_utils.create_sequence('REVIEWS_SEQ');
     create_delete_utils.create_table('CUSTOMER');
     create_delete_utils.create_table('ADDRESS');
     create_delete_utils.create_table('CATEGORY');
@@ -1691,3 +1741,12 @@ FROM reviews r ,order_items oi, product p, manufacturer m
 WHERE r.order_item_id = oi.order_item_id and oi.product_id = p.product_id 
 AND p.manufacturer_id = m.manufacturer_id 
 GROUP BY m.manufacturer_id, m.manufacturer_name, m.manufacturer_id ORDER BY ROUND(AVG(r.rating), 2) DESC;
+
+-- to view the details of the orders placed
+CREATE OR REPLACE VIEW inventory_order_details AS
+SELECT o.order_id, COUNT(oi.order_item_id) AS "NO OF ORDERED ITEMS", ot.delivery_status, ot.tracking_number, t.total_amount, dp.delivery_partner_name, 
+o.shipping_type, o.order_date
+FROM orders o, order_items oi, transaction t, order_tracking ot, delivery_partner dp
+WHERE o.order_id = oi.order_id AND o.order_id = t.order_id AND o.order_id = ot.order_id AND ot.delivery_partner_id = dp.delivery_partner_id
+GROUP BY o.order_id, ot.delivery_status, ot.tracking_number, t.total_amount, dp.delivery_partner_name, o.shipping_type, o.order_date
+ORDER BY o.order_date DESC;
