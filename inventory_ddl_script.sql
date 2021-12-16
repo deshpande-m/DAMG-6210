@@ -105,7 +105,7 @@ CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
 
         c_user_id := USER;
         c_upper_table_name := UPPER(c_table_name);
-        SELECT count(1) INTO c_count FROM dba_tables where table_name = c_upper_table_name and OWNER = c_user_id;
+        SELECT count(1) INTO c_count FROM user_tables where table_name = c_upper_table_name;
         
         IF c_count = 0 THEN
             IF c_upper_table_name = 'CUSTOMER' THEN
@@ -407,7 +407,7 @@ CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
         c_count NUMBER;
         ex_type_not_found EXCEPTION;
     BEGIN
-        SELECT count(1) INTO c_count FROM dba_types where type_name = c_type_name;
+        SELECT count(1) INTO c_count FROM user_types where type_name = c_type_name;
         IF c_count = 0 THEN
             IF c_type_name = 'PRODUCT_OBJ' THEN
                 EXECUTE IMMEDIATE

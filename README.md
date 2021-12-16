@@ -38,6 +38,26 @@ Oracle PL/SQL
 Oracle PL/SQL Workbench should already be installed to run the scripts
 
 ## Running Instructions
-1. inventory_ddl_script.sql - Run this script in the oracle workbench to create tables, views, triggers, indexes and sequences
-2. inventory_dml_script.sql - Run this script to insert the data into various tables and to view transactions in action
-3. inventory_report_script.sql - Run this script to gain insights of the system with various reports available to view/analyze
+1. Create a USER
+    ```
+    create user inventory_admin identified by "DMDDFall2021";
+    ```
+
+2. Grant privileges to the USER
+
+    ```
+    GRANT EXECUTE ANY TYPE, EXECUTE ANY PROCEDURE, ALTER ANY PROCEDURE, CREATE ANY TABLE, UNLIMITED TABLESPACE, DROP ANY TRIGGER, CREATE ANY PROCEDURE, ALTER ANY INDEX, CREATE ANY INDEX, CREATE TABLE, CREATE SESSION, DROP ANY TYPE, CREATE ANY TRIGGER, CREATE SEQUENCE, DROP ANY INDEX, SELECT ANY TABLE, DROP ANY TABLE, CREATE ANY TYPE, ALTER ANY TRIGGER, ALTER ANY SEQUENCE, CREATE ANY SEQUENCE, UPDATE ANY TABLE, LOCK ANY TABLE, CREATE TRIGGER, DROP ANY PROCEDURE, DROP ANY SEQUENCE, CREATE ANY VIEW, DELETE ANY TABLE, INSERT ANY TABLE, ALTER ANY TABLE, READ ANY TABLE, DEBUG CONNECT SESSION, MERGE ANY VIEW, ALTER ANY TYPE, CREATE PROCEDURE, SELECT ANY SEQUENCE, DROP ANY VIEW, CREATE VIEW to inventory_admin;
+    ```
+
+3. Login with the created USER
+
+Username: inventory_admin
+Password: DMDDFall2021
+
+4. Run the scripts in given order
+
+    4.1. inventory_ddl_script.sql - Run this script in the oracle workbench to create tables, views, triggers, indexes and sequences
+
+    4.2. inventory_dml_scripts.sql - Run this script to insert the data into various tables and to view transactions in action
+
+    4.3. inventory_reports_script.sql - Run this script to gain insights of the system with various reports available to view/analyze
