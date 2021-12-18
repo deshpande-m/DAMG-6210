@@ -261,7 +261,6 @@ CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
     AS
         c_value VARCHAR2(20);
     BEGIN
-        COMMIT;
         -- disabling constraints
         EXECUTE IMMEDIATE
         'ALTER TABLE address DISABLE CONSTRAINT fkey_address_customer_id';
