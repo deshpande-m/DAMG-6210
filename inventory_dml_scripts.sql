@@ -571,7 +571,7 @@ BEGIN
     inventory_utils.insert_reviews(62, 'best product I have ever purchased', 5);
     inventory_utils.insert_reviews(63, 'quality is bad', 2);
     inventory_utils.insert_reviews(64, 'good for the price', 3);
-    inventory_utils.insert_reviews(64, 'dont buy this crap', 1);
+    inventory_utils.insert_reviews(65, 'dont buy this crap', 1);
     inventory_utils.insert_reviews(66, 'rough and tough', 4);
     inventory_utils.insert_reviews(67, 'highly durable', 5);
     inventory_utils.insert_reviews(68, 'product recommended', 4);
@@ -835,7 +835,7 @@ BEGIN
 
     --creating order tracking again for the same order id
     DBMS_OUTPUT.PUT_LINE('EC21:');
-    inventory_utils.create_transaction(c_order_id, 'GIFT CARD', '');
+    inventory_utils.create_order_tracking(c_order_id);
 END;
 
 
