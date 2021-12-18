@@ -1066,6 +1066,8 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         ex_payment_method_empty EXCEPTION;
         ex_payment_method_invalid EXCEPTION;
         ex_status_invalid EXCEPTION;
+        c_transaction_count NUMBER;
+        ex_transaction_already_present EXCEPTION;
     BEGIN
         IF (TRIM(c_order_id) = '' or c_order_id is null) THEN
             RAISE ex_order_id_empty;
@@ -1082,6 +1084,13 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
             RAISE ex_order_id_not_found;
         END IF;
         
+        SELECT COUNT(1) INTO c_transaction_count FROM transaction WHERE order_id = c_order_id;
+        
+        IF c_transaction_count > 0 THEN
+            RAISE ex_transaction_already_present;
+        END IF;
+
+
         SELECT shipping_charges INTO c_shipping_charges FROM orders WHERE order_id = c_order_id;
         
         c_total_price := get_total_order_price(c_order_id);
@@ -1109,6 +1118,8 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         WHEN ex_payment_method_invalid THEN
             DBMS_OUTPUT.PUT_LINE('Payment method is invalid');
             ROLLBACK TO revert_created_order;
+        WHEN ex_transaction_already_present THEN
+            DBMS_OUTPUT.PUT_LINE('Transaction is already present for this order');
     END create_transaction;
 
     -- create order tracking
@@ -1120,6 +1131,8 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         c_delivery_partner_id NUMBER;
         ex_order_id_not_found EXCEPTION;
         ex_order_id_empty EXCEPTION;
+        c_tracking_count NUMBER;
+        ex_tracking_already_present EXCEPTION;
     BEGIN
         
         IF (TRIM(c_order_id) = '' or c_order_id is null) THEN
@@ -1130,6 +1143,12 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
             RAISE ex_order_id_not_found;
         END IF;
         
+        SELECT COUNT(1) INTO c_tracking_count FROM order_tracking WHERE order_id = c_order_id;
+        
+        IF c_tracking_count > 0 THEN
+            RAISE ex_tracking_already_present;
+        END IF;
+
         SELECT dbms_random.string('X',10) INTO c_tracking_number FROM dual;
         
         SELECT delivery_partner_id INTO c_delivery_partner_id FROM(SELECT delivery_partner_id FROM delivery_partner ORDER BY DBMS_RANDOM.RANDOM) WHERE rownum = 1;
@@ -1144,7 +1163,9 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         WHEN ex_order_id_empty THEN
             DBMS_OUTPUT.PUT_LINE('Order id can not be null or empty');
             ROLLBACK TO revert_created_order;
-        
+        WHEN ex_tracking_already_present THEN
+            DBMS_OUTPUT.PUT_LINE('Order tracking details is already present for this order');
+
     END create_order_tracking;
 
     -- update order tracking status
@@ -1807,6 +1828,8 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         ex_order_not_delivered EXCEPTION;
         c_order_id NUMBER;
         c_order_status VARCHAR2(100);
+        c_review_count NUMBER;
+        ex_review_already_present EXCEPTION;
     BEGIN
         
         IF (TRIM(c_order_item_id) = '' or c_order_item_id is null) THEN
@@ -1824,6 +1847,13 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         IF c_rating <=0 and c_rating > 5 THEN
             RAISE ex_invalid_rating_value;
         END IF;
+
+        SELECT COUNT(1) INTO c_review_count FROM reviews WHERE order_item_id = c_order_item_id;
+        
+        IF c_review_count > 0 THEN
+            RAISE ex_review_already_present;
+        END IF;
+
         
         SELECT order_id INTO c_order_id FROM order_items WHERE order_item_id = c_order_item_id;
         SELECT delivery_status INTO c_order_status FROM order_tracking WHERE order_id = c_order_id;
@@ -1848,6 +1878,8 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
             DBMS_OUTPUT.PUT_LINE('Rating number is invalid. It should be from 1 to 5');
         WHEN ex_order_not_delivered THEN
             DBMS_OUTPUT.PUT_LINE('Review can not be given as the item is not delivered yet or it has been cancelled');
+        WHEN ex_review_already_present THEN
+            DBMS_OUTPUT.PUT_LINE('Review has already been added for this order item');
             
     END insert_reviews;
     

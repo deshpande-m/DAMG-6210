@@ -773,3 +773,70 @@ BEGIN
     inventory_utils.create_order(1, 1, 'Not Exist', c_order_id, '');
 END;
 /
+
+DECLARE
+    c_product_id NUMBER;
+    c_order_id NUMBER;
+BEGIN
+    -- updated the product quantiy with decimal value
+    DBMS_OUTPUT.PUT_LINE('EC13:');
+    inventory_utils.update_product(45, 'Quantity', 10.56);
+    
+    -- updated the product quantiy with negative value
+    DBMS_OUTPUT.PUT_LINE('EC14:');
+    inventory_utils.update_product(45, 'Quantity', -10);
+
+    -- updated the price with negative value
+    DBMS_OUTPUT.PUT_LINE('EC15:');
+    inventory_utils.update_product(45, 'Price', -10);
+END;
+/
+
+DECLARE
+    c_product_id NUMBER;
+    c_order_id NUMBER;
+BEGIN
+    -- creating order again with updated quantity
+    inventory_utils.create_order(1, 1, 'Standard', c_order_id, '');
+    
+    -- adding order items with negative quantity
+    DBMS_OUTPUT.PUT_LINE('EC16:');
+    inventory_utils.create_order_items(c_order_id, -10, 1);
+
+    -- adding order items with decimal quantity
+    DBMS_OUTPUT.PUT_LINE('EC17:');
+    inventory_utils.create_order_items(c_order_id, 1.78, 1);
+END;
+/
+
+DECLARE
+    c_product_id NUMBER;
+    c_order_id NUMBER;
+BEGIN
+    -- order id doesnt exist to update the tracking status
+    DBMS_OUTPUT.PUT_LINE('EC18:');
+    inventory_utils.update_order_tracking_status(1111, 'SHIPPED');
+
+    -- inserting review again for the same order item
+    DBMS_OUTPUT.PUT_LINE('EC19:');
+    inventory_utils.insert_reviews(1, 'This is a good product', 2);
+
+    -- creating order again
+    inventory_utils.create_order(1, 1, 'Standard', c_order_id, '');
+    
+    inventory_utils.create_order_items(c_order_id, 1, 1);
+    
+    inventory_utils.create_transaction(c_order_id, 'GIFT CARD', '');
+    inventory_utils.create_order_tracking(c_order_id);
+    
+    --creating transaction again for the same order id
+    DBMS_OUTPUT.PUT_LINE('EC20:');
+    inventory_utils.create_transaction(c_order_id, 'GIFT CARD', '');
+
+    --creating order tracking again for the same order id
+    DBMS_OUTPUT.PUT_LINE('EC21:');
+    inventory_utils.create_transaction(c_order_id, 'GIFT CARD', '');
+END;
+
+
+
