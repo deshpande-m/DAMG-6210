@@ -11,7 +11,7 @@ DECLARE
 BEGIN
     -- delete existing records
     create_delete_utils.delete_records;
-    
+   
     -- inserting delivery partner records
     inventory_utils.insert_delivery_partner(c_delivery_partner_id, 'PRIME');
     inventory_utils.insert_delivery_partner(c_delivery_partner_id, 'FEDX');
@@ -142,10 +142,19 @@ BEGIN
 END;
 /
 
+-- to display the original quantities of the products
+SELECT * FROM customer;
+SELECT * FROM address;
+SELECT * FROM category;
+SELECT * FROM manufacturer;
+SELECT * FROM product;
+SELECT * FROM delivery_partner;
+/
+
 DECLARE
     c_order_id NUMBER;
 BEGIN
-    -- order flow 1
+    -- order flow 1 - to place an order
     inventory_utils.create_order(1, 1, 'Standard', c_order_id, '');
     
     inventory_utils.create_order_items(c_order_id, 2, 1);
@@ -159,41 +168,48 @@ BEGIN
 END;
 /
 
-/*
-SELECT * FROM customer;
-SELECT * FROM address;
-SELECT * FROM category;
-SELECT * FROM manufacturer;
-SELECT * FROM product;
 SELECT * FROM orders;
 SELECT * FROM order_items;
 SELECT * FROM transaction;
 SELECT * FROM order_tracking;
-SELECT * FROM delivery_partner;
-SELECT * FROM reviews;
-*/
+SELECT * FROM product;
+/
 
+-- flow for SHIPPINGDATEUPDATE trigger
 BEGIN
     inventory_utils.update_order_tracking_status(1, 'SHIPPED');
 END;
 /
 
+SELECT * FROM order_tracking;
+SELECT * FROM orders;
+/
+
+-- flow for DELIVERYDATEUPDATE trigger
 BEGIN
     inventory_utils.update_order_tracking_status(1, 'DELIVERED');
 END;
 /
 
+SELECT * FROM order_tracking;
+SELECT * FROM orders;
+/
+
+-- to display the quanity of products before cancellation flow
+SELECT * FROM product;
+/
+
 DECLARE
     c_order_id NUMBER;
 BEGIN
-    -- order flow 2
-    inventory_utils.create_order(2, 2, 'Standard', c_order_id, '');
+    -- order flow 2 - to cancel an order
+    inventory_utils.create_order(2, 2, 'Express', c_order_id, '');
     
-    inventory_utils.create_order_items(c_order_id, 1, 1);
     inventory_utils.create_order_items(c_order_id, 1, 6);
     inventory_utils.create_order_items(c_order_id, 1, 7);
-    inventory_utils.create_order_items(c_order_id, 1, 44);
-    inventory_utils.create_order_items(c_order_id, 1, 5);
+    inventory_utils.create_order_items(c_order_id, 1, 8);
+    inventory_utils.create_order_items(c_order_id, 1, 9);
+    inventory_utils.create_order_items(c_order_id, 1, 10);
     
     inventory_utils.create_transaction(c_order_id, 'DEBIT CARD', '');
     inventory_utils.create_order_tracking(c_order_id);
@@ -202,11 +218,24 @@ BEGIN
 END;
 /
 
+SELECT * FROM orders;
+SELECT * FROM order_items;
+SELECT * FROM transaction;
+SELECT * FROM order_tracking;
+SELECT * FROM product;
+/
+
+-- for INCREASE_PRODUCT_QUANTITY trigger
 BEGIN
     inventory_utils.update_order_tracking_status(2, 'CANCELLED');
 END;
 /
 
+SELECT * FROM order_tracking;
+SELECT * FROM product;
+/
+
+-- to populate order data for views/reports
 DECLARE
     c_order_id NUMBER;
 BEGIN
@@ -464,6 +493,15 @@ BEGIN
 END;
 /
 
+SELECT * FROM orders;
+/
+
+-- to show users cant review if the order is cancelled
+SELECT * FROM order_tracking WHERE order_id = 2;
+SELECT * FROM order_items WHERE order_id = 2;
+/
+
+-- to populate reviews for views/reports
 BEGIN
     -- adding reviews
     inventory_utils.insert_reviews(1, 'This is a good product', 4);
@@ -471,11 +509,14 @@ BEGIN
     inventory_utils.insert_reviews(3, 'Good in the initial days and then degraded', 1);
     inventory_utils.insert_reviews(4, 'not fitting properly', 3);
     inventory_utils.insert_reviews(5, 'best product I have ever purchased', 5);
+    -- EC1: can not review cancelled order items
+    DBMS_OUTPUT.PUT_LINE('EC1:');
     inventory_utils.insert_reviews(6, 'quality is bad', 2);
     inventory_utils.insert_reviews(7, 'good for the price', 3);
     inventory_utils.insert_reviews(8, 'dont buy this crap', 1);
     inventory_utils.insert_reviews(9, 'rough and tough', 4);
     inventory_utils.insert_reviews(10, 'highly durable', 5);
+    
     inventory_utils.insert_reviews(11, 'product recommended', 4);
     inventory_utils.insert_reviews(12, 'best of best', 5);
     inventory_utils.insert_reviews(13, 'quality has been degraded over years', 2);
@@ -539,6 +580,15 @@ BEGIN
 END;
 /
 
+SELECT * FROM reviews;
+/
+
+-- error flows
+-- show count of orders and order_items
+SELECT * FROM orders;
+SELECT * FROM order_items;
+/
+
 DECLARE
     c_product_id NUMBER;
     c_order_id NUMBER;
@@ -549,26 +599,60 @@ BEGIN
     inventory_utils.insert_product(c_product_id, 'Brita Filters 6 pack', 15, 19, 2, 2, 1);
     
     inventory_utils.create_order(1, 1, 'Standard', c_order_id, '');
-    
-    -- EC1: quantity of the product is 0 and requested quantity is 1. Transaction will be rolled back
-    DBMS_OUTPUT.PUT_LINE('EC1:');
+    -- EC2: quantity of the product is 0 and requested quantity is 1. Transaction will be rolled back
+    DBMS_OUTPUT.PUT_LINE('EC2:');
     inventory_utils.create_order_items(c_order_id, 1, 45);
-    
+END;
+/
+
+SELECT * FROM orders;
+SELECT * FROM order_items;
+/
+
+DECLARE
+    c_product_id NUMBER;
+    c_order_id NUMBER;
+BEGIN
     inventory_utils.create_order(1, 1, 'Standard', c_order_id, '');
     
-    -- EC2: quantity of the product is 13 and requested quantity is 16. Transaction will be rolled back
-    DBMS_OUTPUT.PUT_LINE('EC2:');
+    -- EC3: quantity of the product is 15 and requested quantity is 16. Transaction will be rolled back
+    DBMS_OUTPUT.PUT_LINE('EC3:');
     inventory_utils.create_order_items(c_order_id, 16, 46);
-    
+END;
+/
+
+SELECT * FROM orders;
+SELECT * FROM order_items;
+-- to show count of transaction nad order_tracking
+SELECT * FROM transaction;
+SELECT * FROM order_tracking;
+/
+
+DECLARE
+    c_product_id NUMBER;
+    c_order_id NUMBER;
+BEGIN
     inventory_utils.create_order(1, 1, 'Express', c_order_id, '');
     
-    -- EC3: adding a product that doesnt exist. Transaction will be rolled back
-    DBMS_OUTPUT.PUT_LINE('EC3:');
+    -- EC4: adding a product that doesnt exist. Transaction will be rolled back
+    DBMS_OUTPUT.PUT_LINE('EC4:');
     inventory_utils.create_order_items(c_order_id, 10, 100);
     
-    inventory_utils.create_transaction(c_order_id, 'CARD', '');
+    inventory_utils.create_transaction(c_order_id, 'CREDIT CARD', '');
     inventory_utils.create_order_tracking(c_order_id);
-    
+END;
+/
+
+SELECT * FROM orders;
+SELECT * FROM order_items;
+SELECT * FROM transaction;
+SELECT * FROM order_tracking;
+/
+
+DECLARE
+    c_product_id NUMBER;
+    c_order_id NUMBER;
+BEGIN
     -- updated the product quantiy from 0 to 100
     inventory_utils.update_product(45, 'Quantity', 100);
     
@@ -580,53 +664,112 @@ BEGIN
     -- quantity of the product requested is redueced
     inventory_utils.create_order_items(c_order_id, 15, 46);
     
-    inventory_utils.create_transaction(c_order_id, 'CARD', '');
+    inventory_utils.create_transaction(c_order_id, 'GIFT CARD', '');
     inventory_utils.create_order_tracking(c_order_id);
     
-    -- EC4: adding an order item after the order is placed
-    DBMS_OUTPUT.PUT_LINE('EC4:');
-    inventory_utils.create_order_items(c_order_id, 8, 47);
-    
-    -- EC5: adding reviews before order is delivered
+    -- EC5: adding an order item after the order is placed
     DBMS_OUTPUT.PUT_LINE('EC5:');
-    inventory_utils.insert_reviews(6, 'Product is good', 4); -- change order item id
+    inventory_utils.create_order_items(c_order_id, 8, 47);
+END;
+/
+
+SELECT * FROM orders;
+SELECT * FROM order_items;
+SELECT * FROM transaction;
+SELECT * FROM order_tracking;
+/
+
+DECLARE
+    c_product_id NUMBER;
+    c_order_id NUMBER;
+BEGIN
+
+    -- creating order again
+    inventory_utils.create_order(1, 1, 'Standard', c_order_id, '');
     
-    -- EC6: tracking status invalid error
+    inventory_utils.create_order_items(c_order_id, 10, 45);
+    
+    inventory_utils.create_transaction(c_order_id, 'GIFT CARD', '');
+    inventory_utils.create_order_tracking(c_order_id);
+    
+    inventory_utils.update_order_tracking_status(c_order_id, 'SHIPPED');
+
+    -- EC6: adding reviews before order is delivered
     DBMS_OUTPUT.PUT_LINE('EC6:');
+    inventory_utils.insert_reviews(6, 'Product is good', 4);
+    
+    -- EC7: tracking status invalid error
+    DBMS_OUTPUT.PUT_LINE('EC7:');
     inventory_utils.update_order_tracking_status(c_order_id, 'DUMMY_STATUS');
     
     -- updating order status 
-    inventory_utils.update_order_tracking_status(c_order_id, 'SHIPPED');
-    --updating order status
     inventory_utils.update_order_tracking_status(c_order_id, 'IN TRANSIT');
-    -- EC7: can not change status back to shipped once it is in transit
-    DBMS_OUTPUT.PUT_LINE('EC7:');
+
+    -- EC8: can not change status back to shipped once it is in transit
+    DBMS_OUTPUT.PUT_LINE('EC8:');
     inventory_utils.update_order_tracking_status(c_order_id, 'SHIPPED');
-    
+END;
+/
+
+DECLARE
+    c_product_id NUMBER;
+    c_order_id NUMBER;
+BEGIN
     -- inactivating customer
     inventory_utils.inactivate_customer(1);
     
-    -- EC8: inactive users can not place orders
-    DBMS_OUTPUT.PUT_LINE('EC8:');
+    -- EC9: inactive users can not place orders
+    DBMS_OUTPUT.PUT_LINE('EC9:');
     inventory_utils.create_order(1, 1, 'Standard', c_order_id, '');
-    
+END;
+/
+
+SELECT * FROM customer;
+/
+
+DECLARE
+    c_product_id NUMBER;
+    c_order_id NUMBER;
+BEGIN
     -- activating customer
     inventory_utils.activate_customer(1);
-    
-    inventory_utils.create_order(1, 1, 'Standard', c_order_id, '');
     
     --inactivating product
     inventory_utils.inactivate_product(47);
     
-    -- EC9: will not be able to place orders for inactive products. Transaction will be rolled back
-    DBMS_OUTPUT.PUT_LINE('EC9:');
-    inventory_utils.create_order_items(c_order_id, 1, 47);
+    inventory_utils.create_order(1, 1, 'Standard', c_order_id, '');
     
+    -- EC10: will not be able to place orders for inactive products. Transaction will be rolled back
+    DBMS_OUTPUT.PUT_LINE('EC10:');
+    inventory_utils.create_order_items(c_order_id, 1, 47);
+END;
+/
+
+SELECT * FROM product;
+/
+
+DECLARE
+    c_product_id NUMBER;
+    c_order_id NUMBER;
+BEGIN
     -- activating product
     inventory_utils.activate_product(47);
     
-    -- EC10: wil not be able to place orders as address id 2 doesnt belong to customer 1
-    DBMS_OUTPUT.PUT_LINE('EC10:');
+    -- EC11: wil not be able to place orders as address id 2 doesnt belong to customer 1
+    DBMS_OUTPUT.PUT_LINE('EC11:');
     inventory_utils.create_order(1, 2, 'Standard', c_order_id, '');
+END;
+/
+
+DECLARE
+    c_product_id NUMBER;
+    c_order_id NUMBER;
+BEGIN
+    -- activating product
+    inventory_utils.activate_product(47);
+    
+    -- EC12: shipping type is invalid
+    DBMS_OUTPUT.PUT_LINE('EC12:');
+    inventory_utils.create_order(1, 1, 'Not Exist', c_order_id, '');
 END;
 /

@@ -36,7 +36,7 @@ CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
     BEGIN
         c_upper_sequence_name := UPPER(c_sequence_name);
         SELECT count(*) INTO c_sequence_count FROM user_sequences where sequence_name = c_upper_sequence_name;
-
+        
         IF c_sequence_count = 0 THEN
             IF c_upper_sequence_name = 'CUSTOMER_SEQ' THEN
                 EXECUTE IMMEDIATE
@@ -261,6 +261,7 @@ CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
     AS
         c_value VARCHAR2(20);
     BEGIN
+        COMMIT;
         -- disabling constraints
         EXECUTE IMMEDIATE
         'ALTER TABLE address DISABLE CONSTRAINT fkey_address_customer_id';
@@ -406,10 +407,13 @@ CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
     AS
         c_count NUMBER;
         ex_type_not_found EXCEPTION;
+        c_upper_type_name VARCHAR(100);
     BEGIN
-        SELECT count(1) INTO c_count FROM user_types where type_name = c_type_name;
+        c_upper_type_name := UPPER(c_type_name);
+        SELECT count(1) INTO c_count FROM user_types where type_name = c_upper_type_name;
+        
         IF c_count = 0 THEN
-            IF c_type_name = 'PRODUCT_OBJ' THEN
+            IF c_upper_type_name = 'PRODUCT_OBJ' THEN
                 EXECUTE IMMEDIATE
                 'create type PRODUCT_OBJ as object(
                     product_id number,
@@ -417,7 +421,7 @@ CREATE OR REPLACE PACKAGE BODY create_delete_utils AS
                     category_name varchar2(50)
                 )';
 
-            ELSIF c_type_name = 'PRODUCT_REC' THEN
+            ELSIF c_upper_type_name = 'PRODUCT_REC' THEN
                 EXECUTE IMMEDIATE
                 'create type PRODUCT_REC as table of PRODUCT_OBJ';
             ELSE 
@@ -492,14 +496,20 @@ CREATE OR REPLACE PACKAGE inventory_utils AS
     FUNCTION get_product_price(c_product_id order_items.product_id%TYPE) RETURN NUMBER;
 
     -- get product recommendations
-    FUNCTION get_products_rec(c_product_id NUMBER) RETURN product_rec;
+    FUNCTION get_products_rec(c_user_id NUMBER) RETURN product_rec;
     
     -- check if customer is active or not
     FUNCTION is_customer_active(c_customer_id customer.customer_id%TYPE) RETURN NUMBER;
     
     -- check if a product is active or not
     FUNCTION is_product_active(c_product_id order_items.product_id%TYPE) RETURN NUMBER;
-
+    
+    -- validating manufacturer id
+    FUNCTION validate_manufacturer_id(c_manufacturer_id manufacturer.manufacturer_id%TYPE) RETURN NUMBER;
+    
+    -- validating category id
+    FUNCTION validate_category_id(c_category_id category.category_id%TYPE) RETURN NUMBER;
+    
     -- create an Order 
     PROCEDURE create_order(
         c_customer_id customer.customer_id%TYPE,
@@ -626,15 +636,49 @@ END inventory_utils;
 
 CREATE OR REPLACE PACKAGE BODY inventory_utils AS
     
+    -- validating manufacturer id
+    FUNCTION validate_manufacturer_id(c_manufacturer_id manufacturer.manufacturer_id%TYPE) 
+    RETURN NUMBER
+    IS 
+        is_manufacturer_id_valid NUMBER;
+    BEGIN
+        BEGIN
+            SELECT manufacturer_id INTO is_manufacturer_id_valid FROM manufacturer WHERE manufacturer_id = c_manufacturer_id;
+    
+        EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+                is_manufacturer_id_valid := 0;
+        END;
+        RETURN is_manufacturer_id_valid; 
+    
+    END validate_manufacturer_id;
+    
+    -- validating category id
+    FUNCTION validate_category_id(c_category_id category.category_id%TYPE) 
+    RETURN NUMBER
+    IS 
+        is_category_id_valid NUMBER;
+    BEGIN
+        BEGIN
+            SELECT category_id INTO is_category_id_valid FROM category WHERE category_id = c_category_id;
+    
+        EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+                is_category_id_valid := 0;
+        END;
+        RETURN is_category_id_valid; 
+    
+    END validate_category_id;
+    
     -- calculate shipping charges
     FUNCTION calculate_shipping_charges(c_shipping_type orders.shipping_type%TYPE) 
     RETURN NUMBER
     IS c_shipping_charges NUMBER;
     BEGIN 
         
-        IF c_shipping_type = 'Standard' THEN
+        IF UPPER(c_shipping_type) = 'STANDARD' THEN
             c_shipping_charges := 0;
-        ELSIF c_shipping_type = 'Express' THEN
+        ELSIF UPPER(c_shipping_type) = 'EXPRESS' THEN
             c_shipping_charges := 10;
         ELSE
             c_shipping_charges := -1;
@@ -786,14 +830,14 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
     END get_total_order_price;
 
     -- get product recommendation
-    FUNCTION get_products_rec (c_product_id NUMBER)
+    FUNCTION get_products_rec (c_user_id NUMBER)
         RETURN product_rec
     AS
         return_value product_rec;
     BEGIN
         with cte as (
         select o.order_id from orders o
-        where customer_id = c_product_id
+        where customer_id = c_user_id
         order by o.order_date desc
         fetch first row only
         ),cte2 as(
@@ -880,17 +924,17 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
                 c_order_id := orders_seq.NEXTVAL;
                 IF (c_order_date = '' or c_order_date is null) THEN
                     INSERT INTO orders (order_id, order_date, shipping_type, customer_id, shipping_charges, address_id)
-                    VALUES (c_order_id, SYSTIMESTAMP,c_shipping_type, c_customer_id, c_shipping_charges, c_address_id);
+                    VALUES (c_order_id, SYSTIMESTAMP,UPPER(c_shipping_type), c_customer_id, c_shipping_charges, c_address_id);
                 ELSE
                     INSERT INTO orders (order_id, order_date, shipping_type, customer_id, shipping_charges, address_id)
-                    VALUES (c_order_id, c_order_date,c_shipping_type, c_customer_id, c_shipping_charges, c_address_id);
+                    VALUES (c_order_id, c_order_date,UPPER(c_shipping_type), c_customer_id, c_shipping_charges, c_address_id);
                 END IF;
             ELSE
                 RAISE ex_address_not_corresponds_to_customer;
             END IF;
         ELSIF validate_customer_id(c_customer_id) = 0 THEN
             RAISE ex_customer_not_found;
-        ELSIF validate_customer_id(c_customer_id) = 0 THEN
+        ELSIF validate_address_id(c_address_id) = 0 THEN
             RAISE ex_address_not_found;
         ELSIF is_customer_active(c_customer_id) = 0 THEN
             RAISE ex_customer_not_active;
@@ -936,7 +980,6 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         ex_product_id_not_active EXCEPTION;
         c_transaction_count NUMBER;
     BEGIN
-        
         IF (TRIM(c_order_id) = '' or c_order_id is null) THEN
             RAISE ex_order_id_empty;
         ELSIF (TRIM(c_quantity) = '' or c_quantity is null) THEN
@@ -1022,12 +1065,18 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         ex_order_id_not_found EXCEPTION;
         ex_order_id_empty EXCEPTION;
         ex_payment_method_empty EXCEPTION;
+        ex_payment_method_invalid EXCEPTION;
+        ex_status_invalid EXCEPTION;
     BEGIN
-        
         IF (TRIM(c_order_id) = '' or c_order_id is null) THEN
             RAISE ex_order_id_empty;
         ELSIF (TRIM(c_payment_method) = '' or c_payment_method is null) THEN
             RAISE ex_payment_method_empty;
+        END IF;
+        
+        IF UPPER(c_payment_method) != 'CREDIT CARD' and UPPER(c_payment_method) != 'DEBIT CARD' and UPPER(c_payment_method) != 'GIFT CARD'
+        and UPPER(c_payment_method) != 'APPLE PAY' and UPPER(c_payment_method) != 'CASH ON DELIVERY' THEN
+            RAISE ex_payment_method_invalid;
         END IF;
         
         IF validate_order_id(c_order_id) = 0 THEN
@@ -1040,10 +1089,10 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         
         IF (c_order_date = '' or c_order_date is null) THEN
             INSERT INTO transaction (transaction_id, order_id, transaction_date, total_amount, payment_method)
-        VALUES (transaction_seq.NEXTVAL, c_order_id, SYSTIMESTAMP, c_total_price + c_shipping_charges, c_payment_method);
+        VALUES (transaction_seq.NEXTVAL, c_order_id, SYSTIMESTAMP, c_total_price + c_shipping_charges, UPPER(c_payment_method));
         ELSE
             INSERT INTO transaction (transaction_id, order_id, transaction_date, total_amount, payment_method)
-        VALUES (transaction_seq.NEXTVAL, c_order_id, c_order_date, c_total_price + c_shipping_charges, c_payment_method);
+        VALUES (transaction_seq.NEXTVAL, c_order_id, c_order_date, c_total_price + c_shipping_charges, UPPER(c_payment_method));
         END IF;
         
         UPDATE orders SET order_amount = c_total_price WHERE order_id = c_order_id;
@@ -1058,7 +1107,9 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         WHEN ex_payment_method_empty THEN
             DBMS_OUTPUT.PUT_LINE('Payment method can not be null or empty');
             ROLLBACK TO revert_created_order;
-        
+        WHEN ex_payment_method_invalid THEN
+            DBMS_OUTPUT.PUT_LINE('Payment method is invalid');
+            ROLLBACK TO revert_created_order;
     END create_transaction;
 
     -- create order tracking
@@ -1122,25 +1173,25 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
             RAISE ex_order_id_not_found;
         END IF;
         
-        IF c_status != 'SHIPPED' and c_status != 'IN TRANSIT' and c_status != 'OUT FOR DELIVERY' and c_status != 'DELIVERED' and c_status != 'CANCELLED' THEN
+        IF UPPER(c_status) != 'SHIPPED' and UPPER(c_status) != 'IN TRANSIT' and UPPER(c_status) != 'OUT FOR DELIVERY' and UPPER(c_status) != 'DELIVERED' and UPPER(c_status) != 'CANCELLED' THEN
             RAISE ex_status_invalid;
         END IF;
         
         SELECT delivery_status INTO c_delivery_status FROM order_tracking WHERE order_id = c_order_id;
         
-        IF c_delivery_status = 'IN TRANSIT' and c_status = 'SHIPPED' THEN
+        IF c_delivery_status = 'IN TRANSIT' and UPPER(c_status) = 'SHIPPED' THEN
             RAISE ex_shipping_status_change_exception;
-        ELSIF c_delivery_status = 'OUT FOR DELIVERY' and (c_status = 'SHIPPED' or c_status = 'IN TRANSIT')  THEN
+        ELSIF c_delivery_status = 'OUT FOR DELIVERY' and (UPPER(c_status) = 'SHIPPED' or UPPER(c_status) = 'IN TRANSIT')  THEN
             RAISE ex_shipping_status_change_exception;
-        ELSIF c_delivery_status = 'DELIVERED' and (c_status = 'SHIPPED' or c_status = 'OUT FOR DELIVERY' or c_status = 'IN TRANSIT')  THEN
+        ELSIF c_delivery_status = 'DELIVERED' and (UPPER(c_status) = 'SHIPPED' or UPPER(c_status) = 'OUT FOR DELIVERY' or UPPER(c_status) = 'IN TRANSIT')  THEN
             RAISE ex_shipping_status_change_exception;
-        ELSIF c_delivery_status = 'CANCELLED' and (c_status = 'SHIPPED' or c_status = 'OUT FOR DELIVERY' or c_status = 'IN TRANSIT' or c_status = 'DELIVERED')  THEN
+        ELSIF c_delivery_status = 'CANCELLED' and (UPPER(c_status) = 'SHIPPED' or UPPER(c_status) = 'OUT FOR DELIVERY' or UPPER(c_status) = 'IN TRANSIT' or UPPER(c_status) = 'DELIVERED')  THEN
             RAISE ex_shipping_status_change_exception;
         END IF;
         
-        UPDATE order_tracking SET delivery_status = c_status WHERE order_id = c_order_id;
+        UPDATE order_tracking SET delivery_status = UPPER(c_status) WHERE order_id = c_order_id;
         
-        IF c_status = 'DELIVERED' THEN
+        IF UPPER(c_status) = 'DELIVERED' THEN
             UPDATE order_tracking SET delivery_date = SYSTIMESTAMP WHERE order_id = c_order_id;
         END IF;
         
@@ -1171,6 +1222,10 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         ex_product_id_not_found EXCEPTION;
         ex_invalid_value EXCEPTION;
         ex_product_id_not_active EXCEPTION;
+        ex_price_zero EXCEPTION;
+
+        ex_quantity_negative EXCEPTION;
+        ex_quantity_invalid EXCEPTION;
     BEGIN
         
         IF (TRIM(c_product_id) = '' or c_product_id is null) THEN
@@ -1180,22 +1235,32 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         ELSIF (TRIM(c_value) = '' or c_value is null) THEN
             RAISE ex_value_empty;
         END IF;
-        
+
         IF validate_product_id(c_product_id) = 0 THEN
             RAISE ex_product_id_not_found;
         ELSIF is_product_active(c_product_id) = 0 THEN
             RAISE ex_product_id_not_active;
         END IF;
         
-        IF c_type != 'Quantity' and c_type != 'Price' and c_type != 'Name' THEN
+        IF UPPER(c_type) != 'QUANTITY' and UPPER(c_type) != 'PRICE' and UPPER(c_type) != 'NAME' THEN
             RAISE ex_invalid_value;
         END IF;
         
-        IF c_type = 'Quantity' THEN
+        IF UPPER(c_type) = 'QUANTITY' THEN
+            IF (REGEXP_LIKE(TO_NUMBER(c_value), '^[0-9]+$')) THEN
+                IF TO_NUMBER(c_value) < 0 THEN
+                    RAISE ex_quantity_negative;
+                END IF;
+            ELSE
+                 RAISE ex_quantity_invalid;
+            END IF;
             UPDATE product SET quantity = TO_NUMBER(c_value) WHERE product_id = c_product_id;
-        ELSIF c_type = 'Price' THEN
-            UPDATE product SET price = TO_NUMBER(c_value) WHERE product_id = c_product_id;
-        ELSIF c_type = 'Name' THEN
+        ELSIF UPPER(c_type) = 'PRICE' THEN
+            IF TO_NUMBER(c_value) <= 0 THEN
+                RAISE ex_price_zero;
+            END IF;
+            UPDATE product SET price = TRUNC(TO_NUMBER(c_value), 2) WHERE product_id = c_product_id;
+        ELSIF UPPER(c_type) = 'NAME' THEN
             UPDATE product SET product_name = c_value WHERE product_id = c_product_id;
         END IF;
         
@@ -1212,6 +1277,12 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
             DBMS_OUTPUT.PUT_LINE('Provided value in invalid. Valid values are Quantity, Price, Name');
         WHEN ex_product_id_not_active THEN
             DBMS_OUTPUT.PUT_LINE('Product id is inactive');
+        WHEN ex_price_zero THEN
+            DBMS_OUTPUT.PUT_LINE('Price can not be 0 or less than 0');
+        WHEN ex_quantity_negative THEN
+            DBMS_OUTPUT.PUT_LINE('Quantity can not be less than 0');
+        WHEN ex_quantity_invalid THEN
+            DBMS_OUTPUT.PUT_LINE('Quantity is invalid');
             
     END update_product;
     
@@ -1247,15 +1318,15 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
     AS
         ex_customer_id_empty EXCEPTION;
         ex_customer_id_not_found EXCEPTION;
+        ex_customer_id_not_valid EXCEPTION;
     BEGIN
-        
         IF (TRIM(c_customer_id) = '' or c_customer_id is null) THEN
             RAISE ex_customer_id_empty;
         ELSIF validate_customer_id(c_customer_id) = 0 THEN
             RAISE ex_customer_id_not_found;
         END IF;
         
-            UPDATE customer SET is_active = 1 WHERE customer_id = c_customer_id;
+        UPDATE customer SET is_active = 1 WHERE customer_id = c_customer_id;
         
     EXCEPTION
         WHEN ex_customer_id_empty THEN
@@ -1329,34 +1400,54 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         ex_last_name_not_found EXCEPTION;
         ex_email_empty EXCEPTION;
         ex_active_status_invalid EXCEPTION;
+        ex_first_name_not_valid EXCEPTION;
+        ex_last_name_not_valid EXCEPTION;
+        ex_email_invalid EXCEPTION;
+        ex_dob_empty EXCEPTION;
     BEGIN
         c_customer_id := 0;
         IF (TRIM(p_first_name) = '' or p_first_name is null) THEN
             RAISE ex_first_name_not_found;
+        ELSIF (REGEXP_LIKE(p_first_name, '^[0-9]+$')) THEN
+            RAISE ex_first_name_not_valid;
         ELSIF (TRIM(p_last_name) = '' or p_last_name is null) THEN
             RAISE ex_last_name_not_found;
+        ELSIF (REGEXP_LIKE(p_last_name, '^[0-9]+$')) THEN
+            RAISE ex_last_name_not_valid;
         ELSIF (TRIM(p_email) = '' or p_email is null) THEN
             RAISE ex_email_empty;
+        ELSIF NOT REGEXP_LIKE (p_email, '[a-zA-Z0-9._%-]+@[a-zA-Z0-9._%-]+\.[a-zA-Z]{2,4}') THEN
+            RAISE ex_email_invalid;
+        ELSIF (TRIM(p_date_of_birth) = '' or p_date_of_birth is null) THEN
+            RAISE ex_dob_empty;
         END IF;
         IF (p_is_active !=1 and p_is_active !=0) THEN
             RAISE ex_active_status_invalid ;
         END IF;
         
         c_customer_id := customer_seq.NEXTVAL;
-        LOCK TABLE CUSTOMER IN EXCLUSIVE MODE; 
         INSERT INTO CUSTOMER (customer_id, first_name,last_name,date_of_birth,email,is_active)
         VALUES (c_customer_id,p_first_name,p_last_name ,p_date_of_birth,p_email,p_is_active);   
-        COMMIT;
     
     EXCEPTION
         WHEN ex_first_name_not_found THEN
-            DBMS_OUTPUT.PUT_LINE('Customer first name not found');
+            DBMS_OUTPUT.PUT_LINE('Customer first name can not be null or empty');
         WHEN ex_last_name_not_found THEN
-            DBMS_OUTPUT.PUT_LINE('Customer last name not found');
+            DBMS_OUTPUT.PUT_LINE('Customer last name can not be null or empty');
         WHEN ex_email_empty THEN
-            DBMS_OUTPUT.PUT_LINE('Customer email id not found');
+            DBMS_OUTPUT.PUT_LINE('Customer email id can not be null or empty');
         WHEN ex_active_status_invalid THEN
             DBMS_OUTPUT.PUT_LINE('Customer status entered is invalid');
+        WHEN ex_first_name_not_valid THEN
+            DBMS_OUTPUT.PUT_LINE('First name is not valid');
+        
+        WHEN ex_last_name_not_valid THEN
+            DBMS_OUTPUT.PUT_LINE('Last name is not valid');
+        WHEN ex_email_invalid THEN
+            DBMS_OUTPUT.PUT_LINE('Email is not valid');
+        WHEN ex_dob_empty THEN
+            DBMS_OUTPUT.PUT_LINE('DOB is not valid');
+            
 
     END insert_customer;
     
@@ -1372,89 +1463,138 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         p_country address.country%TYPE   
     )
     AS
-        ex_customer_id_not_found EXCEPTION;
-        ex_address_1_not_found EXCEPTION;
-        ex_address_2_not_found EXCEPTION;
-        ex_city_not_found EXCEPTION;
-        ex_state_not_found EXCEPTION;
-        ex_country_not_found EXCEPTION;
+        ex_customer_id_empty EXCEPTION;
+        ex_address_1_empty EXCEPTION;
+        ex_address_2_empty EXCEPTION;
+        ex_city_is_empty EXCEPTION;
+        ex_state_empty EXCEPTION;
+        ex_country_empty EXCEPTION;
         ex_zipcode_empty EXCEPTION;
         
+        ex_zip_empty EXCEPTION;
+        ex_customer_id_invalid EXCEPTION;
+        ex_address_1_invalid EXCEPTION;
+        ex_address_2_invalid EXCEPTION;
+        ex_city_invalid EXCEPTION;
+        ex_state_invalid EXCEPTION;
+        ex_country_invalid EXCEPTION;
     BEGIN
         p_address_id := 0;
         
         IF (TRIM(p_customer_id) = '' or p_customer_id is null) THEN
-            RAISE ex_customer_id_not_found;
+            RAISE ex_customer_id_empty;
+        ELSIF validate_customer_id(p_customer_id) = 0 THEN
+            RAISE ex_customer_id_invalid;
         ELSIF (TRIM(p_address_1) = '' or p_address_1 is null) THEN
-            RAISE ex_address_1_not_found;
-        ELSIF (TRIM(p_address_2) = '' or p_address_2 is null) THEN
-            RAISE ex_address_2_not_found;
+            RAISE ex_address_1_empty;
+        ELSIF (REGEXP_LIKE(p_address_1, '^[0-9]+$')) THEN
+            RAISE ex_address_1_invalid;
+        ELSIF (REGEXP_LIKE(p_address_2, '^[0-9]+$')) THEN
+            RAISE ex_address_2_invalid;
         ELSIF (TRIM(p_city) = '' or p_city is null) THEN
-            RAISE ex_city_not_found;
+            RAISE ex_city_is_empty;
+        ELSIF (REGEXP_LIKE(p_city, '^[0-9]+$')) THEN
+            RAISE ex_city_invalid;
         ELSIF (TRIM(p_state) = '' or p_state is null) THEN
-            RAISE ex_state_not_found;
+            RAISE ex_state_empty;
+        ELSIF (REGEXP_LIKE(p_state, '^[0-9]+$')) THEN
+            RAISE ex_state_invalid;
         ELSIF (TRIM(p_country) = '' or p_country is null) THEN
-            RAISE ex_country_not_found;    
-        END IF;
-        IF (REGEXP_LIKE(p_zip, '^[0-9]+$')=False) THEN
+            RAISE ex_country_empty;   
+        ELSIF (REGEXP_LIKE(p_country, '^[0-9]+$')) THEN
+            RAISE ex_country_invalid;
+        ELSIF (TRIM(p_zip) = '' or p_zip is null) THEN
+            RAISE ex_zip_empty;
+        ELSIF NOT (REGEXP_LIKE(p_zip, '^[0-9]+$')) THEN
             RAISE ex_zipcode_empty ;
-        END if; 
+        END IF; 
         
         p_address_id := address_seq.NEXTVAL;
-        LOCK TABLE address IN EXCLUSIVE MODE;
         INSERT INTO address (address_id,customer_id,address_1, address_2,city,state,zip,country)
         VALUES (p_address_id,p_customer_id,p_address_1, p_address_2,p_city,p_state,p_zip,p_country);        
-        COMMIT;
     
     EXCEPTION
             
-        WHEN ex_customer_id_not_found THEN
-            DBMS_OUTPUT.PUT_LINE('Customer Id not found');
+        WHEN ex_customer_id_empty THEN
+            DBMS_OUTPUT.PUT_LINE('Customer Id can not be null or empty');
             
-        WHEN ex_address_1_not_found THEN
-            DBMS_OUTPUT.PUT_LINE('Customer address 1 not found');
+        WHEN ex_address_1_empty THEN
+            DBMS_OUTPUT.PUT_LINE('Customer address 1 can not be null or empty');
             
-        WHEN ex_address_2_not_found THEN
-            DBMS_OUTPUT.PUT_LINE('Customer address 2 not found');
+        WHEN ex_address_2_empty THEN
+            DBMS_OUTPUT.PUT_LINE('Customer address 2 can not be null or empty');
             
-        WHEN  ex_city_not_found THEN
-            DBMS_OUTPUT.PUT_LINE('Customer CITY id not found');
+        WHEN  ex_city_is_empty THEN
+            DBMS_OUTPUT.PUT_LINE('Customer CITY id can not be null or empty');
             
-        WHEN ex_state_not_found THEN
-            DBMS_OUTPUT.PUT_LINE('Customer STATE NOT FOUND');
+        WHEN ex_state_empty THEN
+            DBMS_OUTPUT.PUT_LINE('Customer STATE can not be null or empty');
             
-        WHEN ex_country_not_found THEN
-            DBMS_OUTPUT.PUT_LINE('Customer COUNTRY NOT FOUND');
+        WHEN ex_country_empty THEN
+            DBMS_OUTPUT.PUT_LINE('Customer COUNTRY can not be null or empty');
+            
+        WHEN ex_zip_empty THEN
+            DBMS_OUTPUT.PUT_LINE('Customer ZIPCODE can not be null or empty');
+        
+        WHEN ex_customer_id_invalid THEN
+            DBMS_OUTPUT.PUT_LINE('Customer id is invalid or does not exist');
+            
+        WHEN ex_address_1_invalid THEN
+            DBMS_OUTPUT.PUT_LINE('Address 1 is invalid');
+            
+        WHEN ex_address_2_invalid THEN
+            DBMS_OUTPUT.PUT_LINE('Address 2 is invalid');
+            
+        WHEN ex_city_invalid THEN
+            DBMS_OUTPUT.PUT_LINE('City is invalid');
+            
+        WHEN ex_state_invalid THEN
+            DBMS_OUTPUT.PUT_LINE('State is invalid');
+            
+        WHEN ex_country_invalid THEN
+            DBMS_OUTPUT.PUT_LINE('Country is invalid');
             
         WHEN ex_zipcode_empty THEN
-            DBMS_OUTPUT.PUT_LINE('Customer ZIPCODE entered is invalid');
+            DBMS_OUTPUT.PUT_LINE('Zip ccode is not valid');
+            
     END insert_address;
     
-    -- insert category
     PROCEDURE  insert_category( 
         p_category_id OUT Category.category_id%TYPE,
         p_category_name  Category.category_name%TYPE,
         p_category_desc Category.category_desc%TYPE   
     )
     AS
-        ex_category_name_not_found EXCEPTION;
-        
+        ex_category_name_empty EXCEPTION;
+        ex_category_desc_empty EXCEPTION;
+        ex_category_name_invalid EXCEPTION;
+        ex_category_desc_invalid EXCEPTION;
     BEGIN
         p_category_id := 0;
         
         IF(TRIM(p_category_name) = '' or p_category_name is null)THEN
-            RAISE ex_category_name_not_found;
+            RAISE ex_category_name_empty;
+        ELSIF(TRIM(p_category_desc) = '' or p_category_desc is null)THEN
+            RAISE ex_category_desc_empty;
+        ELSIF (REGEXP_LIKE(p_category_name, '^[0-9]+$')) THEN
+            RAISE ex_category_name_invalid;
+        ELSIF (REGEXP_LIKE(p_category_desc, '^[0-9]+$')) THEN
+            RAISE ex_category_desc_invalid;
         END IF;    
         
         p_category_id := category_seq.NEXTVAL;
-        LOCK TABLE Category IN EXCLUSIVE MODE; 
         INSERT INTO Category(category_id,category_name,category_desc)
         VALUES (p_category_id,p_category_name,p_category_desc); 
-        COMMIT; 
     
     EXCEPTION
-        WHEN ex_category_name_not_found THEN
+        WHEN ex_category_name_empty THEN
             DBMS_OUTPUT.PUT_LINE('CATEGORY NAME entered NOT FOUND');
+        WHEN ex_category_desc_empty THEN
+            DBMS_OUTPUT.PUT_LINE('CATEGORY DESCRIPTION entered NOT FOUND');
+        WHEN ex_category_name_invalid THEN
+            DBMS_OUTPUT.PUT_LINE('CATEGORY NAME invalid');
+        WHEN ex_category_desc_invalid THEN
+            DBMS_OUTPUT.PUT_LINE('CATEGORY DESCRIPTION invalid');
     END insert_category;
     
     --insert manufacturer
@@ -1464,29 +1604,36 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         p_MANUFACTURER_desc MANUFACTURER.MANUFACTURER_desc%TYPE
     )
     AS
-        ex_MANUFACTURER_name_not_found EXCEPTION;
-        ex_DESCRIPTION_not_valid EXCEPTION;
-
+        ex_MANUFACTURER_name_empty EXCEPTION;
+        ex_DESCRIPTION_empty EXCEPTION;
+        ex_MANUFACTURER_name_invalid EXCEPTION;
+        ex_MANUFACTURER_DESCRIPTION_invalid EXCEPTION;
     BEGIN
         p_MANUFACTURER_id := 0;
         
         IF (TRIM(p_MANUFACTURER_name) = '' or p_MANUFACTURER_name is null) THEN
-            RAISE ex_MANUFACTURER_name_not_found;
+            RAISE ex_MANUFACTURER_name_empty;
         ELSIF (TRIM(p_MANUFACTURER_desc) = '' or p_MANUFACTURER_desc is null) THEN
-            RAISE ex_DESCRIPTION_not_valid;
+            RAISE ex_DESCRIPTION_empty;
+        ELSIF (REGEXP_LIKE(p_MANUFACTURER_name, '^[0-9]+$')) THEN
+            RAISE ex_MANUFACTURER_name_invalid;
+        ELSIF (REGEXP_LIKE(p_MANUFACTURER_desc, '^[0-9]+$')) THEN
+            RAISE ex_MANUFACTURER_DESCRIPTION_invalid;
         END IF;
         
         p_MANUFACTURER_id := manufacturer_seq.NEXTVAL;
-        LOCK TABLE MANUFACTURER IN EXCLUSIVE MODE;
         INSERT INTO MANUFACTURER (MANUFACTURER_id,MANUFACTURER_name,MANUFACTURER_desc)
         VALUES (p_MANUFACTURER_id,p_MANUFACTURER_name,p_MANUFACTURER_desc);
-        COMMIT;
 
     EXCEPTION
-        WHEN ex_MANUFACTURER_name_not_found THEN
+        WHEN ex_MANUFACTURER_name_empty THEN
             DBMS_OUTPUT.PUT_LINE('Manufacturer name cannot be null or empty');
-        WHEN  ex_DESCRIPTION_not_valid THEN
+        WHEN  ex_DESCRIPTION_empty THEN
             DBMS_OUTPUT.PUT_LINE('Manufacturer description cannot be null or empty');
+        WHEN  ex_MANUFACTURER_name_invalid THEN
+            DBMS_OUTPUT.PUT_LINE('Manufacturer name invalid');
+        WHEN  ex_MANUFACTURER_DESCRIPTION_invalid THEN
+            DBMS_OUTPUT.PUT_LINE('Manufacturer description invalid');
     END insert_manufacturer;
     
     --insert product
@@ -1500,45 +1647,121 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         p_is_active product.is_active%TYPE  
     )
     AS
-        ex_product_name_not_found EXCEPTION;
-        ex_product_PRICE_not_found EXCEPTION;
-        ex_product_categoryid_not_found EXCEPTION;
-        ex_product_manufacturerid_not_found EXCEPTION;
-        ex_product_status_invalid EXCEPTION;
+        ex_product_name_empty EXCEPTION;
+        ex_product_name_invalid EXCEPTION;
+        ex_quantity_empty EXCEPTION;
+        ex_price_empty EXCEPTION;
+        
+        ex_active_status_invalid EXCEPTION;
+        
+        ex_quantity_zero EXCEPTION;
+        
+        ex_quantity_invalid EXCEPTION;
+        
+        ex_price_zero EXCEPTION;
+        
+        ex_price_invalid EXCEPTION;
+        
+        ex_manufacturer_id_invalid EXCEPTION;
+        
+        ex_category_id_invalid EXCEPTION;
+        
+        ex_manufacturer_id_empty EXCEPTION;
+        
+        ex_category_id_empty EXCEPTION;
+        
+        
     BEGIN
         p_product_id := 0;
             
         IF (TRIM(p_name) = '' or p_name is null) THEN
-            RAISE  ex_product_name_not_found;   
+            RAISE ex_product_name_empty;   
         
-        ELSIF (p_price=0) THEN
-            RAISE ex_product_PRICE_not_found;
-             
-        ELSIF (p_category_id=0) THEN
-            RAISE ex_product_categoryid_not_found;
+        ELSIF (REGEXP_LIKE(p_name, '^[0-9]+$')) THEN
+            RAISE ex_product_name_invalid; 
+        
+        ELSIF (TRIM(p_quantity) = '' or p_quantity is null) THEN
+            RAISE ex_quantity_empty;
+        
+        ELSIF (TRIM(p_price) = '' or p_price is null) THEN
+            RAISE ex_price_empty;
+        
+        ELSIF (TRIM(p_category_id) = '' or p_category_id is null) THEN
+            RAISE ex_category_id_empty;
+
+        ELSIF (TRIM(p_manufacturer_id) = '' or p_manufacturer_id is null) THEN
+            RAISE ex_manufacturer_id_empty;
             
-        ELSIF (p_manufacturer_id= 0) THEN
-            RAISE ex_product_manufacturerid_not_found;
+        ELSIF validate_manufacturer_id(p_manufacturer_id) = 0 THEN
+            RAISE ex_manufacturer_id_invalid ;
+            
+        ELSIF validate_category_id(p_category_id) = 0 THEN
+            RAISE ex_category_id_invalid ;
+            
+        ELSIF (p_is_active !=1 and p_is_active !=0) THEN
+            RAISE ex_active_status_invalid ;
+            
         END IF;
-       
+        
+        IF (REGEXP_LIKE(p_quantity, '^[0-9]+$')) THEN
+            IF p_quantity < 0 THEN
+                RAISE ex_quantity_zero;
+            END IF;
+        ELSE
+            RAISE ex_quantity_invalid;
+        END IF;
+        
+        --IF (REGEXP_LIKE(p_price, '^[0-9]+$')) THEN
+            IF p_price <= 0 THEN
+                RAISE ex_price_zero;
+            END IF;
+        --ELSE
+          --  RAISE ex_price_invalid;
+        --END IF;
+        
         p_product_id := product_seq.NEXTVAL;
-        LOCK TABLE product IN EXCLUSIVE MODE;
         INSERT INTO product (product_id, product_name, quantity , price ,category_id,manufacturer_id , is_active )
-        VALUES (p_product_id, p_name, p_quantity , p_price ,p_category_id ,p_manufacturer_id ,p_is_active );
-        COMMIT;
+        VALUES (p_product_id, p_name, p_quantity , TRUNC(p_price, 2) ,p_category_id ,p_manufacturer_id ,p_is_active );
 
     EXCEPTION
-        WHEN ex_product_name_not_found THEN
-            DBMS_OUTPUT.PUT_LINE('PRODUCT NAME ENTERED ID INVALID');
+        WHEN ex_product_name_empty THEN
+            DBMS_OUTPUT.PUT_LINE('Product name can not be null or empty');
             
-        WHEN ex_product_PRICE_not_found THEN
-            DBMS_OUTPUT.PUT_LINE('PRODUCT PRICE ENTERED ID INVALID');
+        WHEN ex_product_name_invalid THEN
+            DBMS_OUTPUT.PUT_LINE('Product name is invalid');
             
-        WHEN ex_product_categoryid_not_found THEN
-            DBMS_OUTPUT.PUT_LINE('CATEGORY ID id not found');
+        WHEN ex_quantity_empty THEN
+            DBMS_OUTPUT.PUT_LINE('Quantity can not be null or empty');
             
-        WHEN ex_product_manufacturerid_not_found THEN
-            DBMS_OUTPUT.PUT_LINE('MANUFACTURER ID id not found');     
+        WHEN ex_price_empty THEN
+            DBMS_OUTPUT.PUT_LINE('Price can not be null or empty'); 
+            
+        WHEN ex_active_status_invalid THEN
+            DBMS_OUTPUT.PUT_LINE('Product status value is invalid');
+            
+        WHEN ex_quantity_zero THEN
+            DBMS_OUTPUT.PUT_LINE('Quantity can not be 0 or less than 0');
+            
+        WHEN ex_quantity_invalid THEN
+            DBMS_OUTPUT.PUT_LINE('Quantity is invalid');
+            
+        WHEN ex_price_zero THEN
+            DBMS_OUTPUT.PUT_LINE('Price can not be 0 or less than 0');
+            
+        WHEN ex_price_invalid THEN
+            DBMS_OUTPUT.PUT_LINE('Price is invalid');
+            
+        WHEN ex_manufacturer_id_invalid THEN
+            DBMS_OUTPUT.PUT_LINE('Manufacturer id doesnt exist');
+            
+        WHEN ex_category_id_invalid THEN
+            DBMS_OUTPUT.PUT_LINE('Category id doesnt exist');
+        
+        WHEN ex_manufacturer_id_empty THEN
+            DBMS_OUTPUT.PUT_LINE('Manufacturer id can not be null or empty');
+        
+        WHEN ex_category_id_empty THEN
+            DBMS_OUTPUT.PUT_LINE('Category id can not be null or empty');
             
     END insert_product; 
     
@@ -1548,23 +1771,26 @@ CREATE OR REPLACE PACKAGE BODY inventory_utils AS
         P_delivery_partner_name DELIVERY_PARTNER.DELIVERY_PARTNER_NAME%TYPE 
     )
     AS
-        ex_delivery_partner_name_not_found EXCEPTION;
+        ex_delivery_partner_name_empty EXCEPTION;
+        ex_delivery_partner_name_invalid EXCEPTION;
     BEGIN
         P_delivery_partner_id := 0;
         
         IF (TRIM(P_delivery_partner_name) = '' or P_delivery_partner_name is null) THEN
-            RAISE  ex_delivery_partner_name_not_found; 
+            RAISE  ex_delivery_partner_name_empty;
+        ELSIF (REGEXP_LIKE(P_delivery_partner_name, '^[0-9]+$')) THEN
+            RAISE ex_delivery_partner_name_invalid;
         END IF;
         
         P_delivery_partner_id := delivery_partner_seq.NEXTVAL;
-        LOCK TABLE DELIVERY_PARTNER IN EXCLUSIVE MODE;
         INSERT INTO DELIVERY_PARTNER (DELIVERY_PARTNER_ID, DELIVERY_PARTNER_NAME)
         VALUES (P_delivery_partner_id, P_delivery_partner_name );  
-        COMMIT;
         
     EXCEPTION 
-        WHEN ex_delivery_partner_name_not_found THEN
-            DBMS_OUTPUT.PUT_LINE('Delivery partner NAME ENTERED ID INVALID');
+        WHEN ex_delivery_partner_name_empty THEN
+            DBMS_OUTPUT.PUT_LINE('Delivery partner NAME cannot be null or empty');
+        WHEN ex_delivery_partner_name_invalid THEN
+            DBMS_OUTPUT.PUT_LINE('Delivery partner NAME IS INVALID');
     END insert_delivery_partner;
 
     --insert reviews
@@ -1682,24 +1908,24 @@ END;
 
 -- View to get top 3 products sold by quantity per year
 CREATE or REPLACE VIEW Top_Products AS
-SELECT product_name, "Total Quantity Sold", "Year" FROM
-(SELECT p.product_name, SUM(o.quantity) AS "Total Quantity Sold", EXTRACT(YEAR FROM (orders.order_date)) AS "Year",
+SELECT product_id, product_name, "Total Quantity Sold", "Year" FROM
+(SELECT p.product_id, p.product_name, SUM(o.quantity) AS "Total Quantity Sold", EXTRACT(YEAR FROM (orders.order_date)) AS "Year",
 RANK() OVER (PARTITION BY EXTRACT(YEAR FROM (orders.order_date)) ORDER BY SUM(o.quantity) DESC) AS rn
 FROM product p
 JOIN order_items o ON p.product_id = o.product_id
 JOIN orders ON orders.order_id = o.order_id
-GROUP BY p.product_name,orders.order_date,o.quantity) a
+GROUP BY p.product_id, p.product_name,EXTRACT(YEAR FROM (orders.order_date)),o.quantity) a
 WHERE a. rn <= 3;
 
 -- View to get top 3 categories of product sold by quantity
 CREATE or REPLACE VIEW Top_Categories AS
-SELECT a.category_name, a.prodcount FROM
-(SELECT c.category_name, sum(o.quantity) AS prodcount,
+SELECT a.category_id, a.category_name, a.prodcount FROM
+(SELECT c.category_id, c.category_name, sum(o.quantity) AS prodcount,
 RANK() OVER (PARTITION BY c.category_name ORDER BY SUM(o.quantity) DESC) AS rn FROM Category c 
 LEFT JOIN product p
 on c.category_id = p.category_id
 JOIN order_items o on o.product_id = p.product_id
-GROUP BY c.category_name) a
+GROUP BY c.category_name, c.category_id) a
 WHERE rn in (1,2,3)
 order by a.prodcount desc
 fetch first 3 rows only;
@@ -1722,13 +1948,13 @@ ORDER BY SUM(o.order_amount) DESC;
 -- Top view total delivery count by delivery vendors
 CREATE or REPLACE VIEW Delivery_Count AS
 SELECT d.delivery_partner_id, d.delivery_partner_name,count(o.delivery_partner_id) AS "Total Count" FROM delivery_partner d
-JOIN order_tracking o on o.delivery_partner_id = d.delivery_partner_id
+JOIN order_tracking o on o.delivery_partner_id = d.delivery_partner_id WHERE o.delivery_status = 'DELIVERED'
 GROUP BY d.delivery_partner_id, d.delivery_partner_name
 ORDER BY COUNT(o.delivery_partner_id) DESC;
 
 -- Top manufacturer average ratings and total number of orders placed
 CREATE OR REPLACE VIEW manufacturer_ratings AS
-SELECT m.manufacturer_id, m.manufacturer_name, ROUND(AVG(r.rating), 2) AS "AVG RATING", COUNT(oi.order_item_id) AS "NO OF ORDERS PLACED",
+SELECT m.manufacturer_id, m.manufacturer_name, ROUND(AVG(r.rating), 2) AS "AVG RATING", COUNT(oi.order_item_id) AS "NO OF REVIEWS",
 CASE
     WHEN ROUND(AVG(r.rating), 2) >= 1 AND ROUND(AVG(r.rating), 2)  <=2.5 
         THEN 'LOW'
@@ -1740,7 +1966,7 @@ END CATEGORY
 FROM reviews r ,order_items oi, product p, manufacturer m 
 WHERE r.order_item_id = oi.order_item_id and oi.product_id = p.product_id 
 AND p.manufacturer_id = m.manufacturer_id 
-GROUP BY m.manufacturer_id, m.manufacturer_name, m.manufacturer_id ORDER BY ROUND(AVG(r.rating), 2) DESC;
+GROUP BY m.manufacturer_id, m.manufacturer_name ORDER BY ROUND(AVG(r.rating), 2) DESC;
 
 -- to view the details of the orders placed
 CREATE OR REPLACE VIEW inventory_order_details AS
